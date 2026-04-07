@@ -6,6 +6,8 @@ node_modules
 .retailer-browser
 .turbo
 artifacts
+apps/web/.tmp-oreilly-test-profile
+apps/e2e/test-results
 
 .next
 dist
