@@ -1,0 +1,1 @@
+export { SupplyIntegrationsPageImpl as default } from "../../parts/integrations/page";

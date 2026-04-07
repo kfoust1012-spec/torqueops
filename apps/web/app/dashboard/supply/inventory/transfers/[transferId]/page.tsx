@@ -1,0 +1,1 @@
+export { SupplyInventoryTransferDetailPageImpl as default } from "../../../../inventory/transfers/[transferId]/page";

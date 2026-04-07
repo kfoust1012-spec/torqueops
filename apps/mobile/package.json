@@ -1,0 +1,43 @@
+{
+  "name": "@mobile-mechanic/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "expo-router/entry",
+  "scripts": {
+    "dev": "expo start --clear",
+    "android": "powershell -ExecutionPolicy Bypass -File ./scripts/run-android-dev.ps1",
+    "ios": "expo run:ios",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@expo/metro-runtime": "~55.0.9",
+    "@mobile-mechanic/api-client": "workspace:*",
+    "@mobile-mechanic/types": "workspace:*",
+    "@mobile-mechanic/validation": "workspace:*",
+    "babel-preset-expo": "~55.0.10",
+    "expo": "~55.0.11",
+    "expo-constants": "~55.0.11",
+    "expo-crypto": "~55.0.12",
+    "expo-file-system": "~55.0.14",
+    "expo-image-picker": "~55.0.16",
+    "expo-linking": "~55.0.11",
+    "expo-location": "~55.1.6",
+    "expo-notifications": "~55.0.16",
+    "expo-router": "~55.0.10",
+    "expo-secure-store": "~55.0.11",
+    "expo-speech-recognition": "^3.1.2",
+    "expo-task-manager": "~55.0.12",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "react-native": "0.83.4",
+    "react-native-gesture-handler": "~2.30.0",
+    "react-native-reanimated": "4.2.1",
+    "react-native-safe-area-context": "~5.6.2",
+    "react-native-screens": "~4.23.0",
+    "react-native-svg": "^15.15.0",
+    "react-native-url-polyfill": "^3.0.0",
+    "react-native-view-shot": "^4.0.3",
+    "react-native-web": "^0.21.2"
+  }
+}

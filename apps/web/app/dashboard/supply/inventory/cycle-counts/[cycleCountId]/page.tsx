@@ -1,0 +1,1 @@
+export { SupplyInventoryCycleCountDetailPageImpl as default } from "../../../../inventory/cycle-counts/[cycleCountId]/page";

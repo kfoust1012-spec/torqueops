@@ -1,0 +1,72 @@
+{
+  "expo": {
+    "name": "Mobile Mechanic Software",
+    "slug": "mobile-mechanic-software",
+    "scheme": "mobilemechanic",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "plugins": [
+      "expo-router",
+      "expo-notifications",
+      [
+        "expo-location",
+        {
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true,
+          "isIosBackgroundLocationEnabled": true,
+          "locationAlwaysAndWhenInUsePermission": "Allow Mobile Mechanic Software to share your live location with dispatch during work hours, even when the app is in the background.",
+          "locationWhenInUsePermission": "Allow Mobile Mechanic Software to access your location while you use the app so you can start workday tracking."
+        }
+      ],
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow Mobile Mechanic Software to use the microphone so mechanics can dictate field notes and job updates.",
+          "speechRecognitionPermission": "Allow Mobile Mechanic Software to transcribe mechanic dictation into field notes and billing updates."
+        }
+      ],
+      "expo-secure-store"
+    ],
+    "android": {
+      "permissions": [
+        "POST_NOTIFICATIONS",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "android.permission.RECORD_AUDIO",
+        "POST_NOTIFICATIONS",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.samhill.mobilemechanicsoftware"
+    },
+    "experiments": {
+      "typedRoutes": true
+    },
+    "ios": {
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Allow Mobile Mechanic Software to access your location while you use the app so you can start workday tracking.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Allow Mobile Mechanic Software to share your live location with dispatch during work hours, even when the app is in the background.",
+        "NSSpeechRecognitionUsageDescription": "Allow Mobile Mechanic Software to transcribe mechanic dictation into field notes and billing updates.",
+        "NSMicrophoneUsageDescription": "Allow Mobile Mechanic Software to use the microphone so mechanics can dictate field notes and job updates."
+      }
+    }
+  }
+}

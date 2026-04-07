@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Mobile Mechanic Procurement Bridge",
+  "version": "0.1.0",
+  "description": "Keeps live retailer sourcing inside the Mobile Mechanic estimate workflow.",
+  "permissions": ["storage", "tabs"],
+  "host_permissions": [
+    "http://127.0.0.1:3000/*",
+    "http://localhost:3000/*",
+    "https://www.oreillyauto.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://127.0.0.1:3000/*", "http://localhost:3000/*"],
+      "js": ["app-bridge.js"],
+      "run_at": "document_start"
+    },
+    {
+      "matches": ["https://www.oreillyauto.com/*"],
+      "js": ["oreilly-content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "Mobile Mechanic Procurement Bridge"
+  }
+}

@@ -1,0 +1,1 @@
+export { SupplyCartPageImpl as default } from "../../../parts/carts/[cartId]/page";

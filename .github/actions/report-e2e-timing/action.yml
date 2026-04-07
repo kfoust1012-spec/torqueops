@@ -1,0 +1,23 @@
+name: Report E2E Timing
+description: Build the timing summary, decision artifact, annotations, and optional timing gate result for a target.
+
+inputs:
+  enforce:
+    description: Whether to fail the step when the timing gate decides to block.
+    required: false
+    default: "false"
+  target:
+    description: E2E target name, such as web or mobile.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Report timing
+      shell: bash
+      run: |
+        args=("${{ inputs.target }}" "--require-sustained-regression" "--github-annotations")
+        if [ "${{ inputs.enforce }}" = "true" ]; then
+          args+=("--enforce")
+        fi
+        node tooling/scripts/run-e2e-timing-report.mjs "${args[@]}"

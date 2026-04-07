@@ -1,0 +1,1 @@
+export { SupplyPurchaseOrderDetailPageImpl as default } from "../../../parts/purchase-orders/[purchaseOrderId]/page";

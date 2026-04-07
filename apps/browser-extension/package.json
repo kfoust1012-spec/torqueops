@@ -1,0 +1,6 @@
+{
+  "name": "@mobile-mechanic/browser-extension",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Browser-assisted retailer sourcing bridge for Mobile Mechanic Software"
+}

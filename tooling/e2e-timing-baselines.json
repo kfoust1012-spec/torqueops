@@ -1,0 +1,32 @@
+{
+  "full": {
+    "timings": {
+      "bootstrapMs": 42000,
+      "e2eMs": 120000,
+      "logGuardMs": 1000,
+      "preflightMs": 1000,
+      "setupGuardMs": 1000,
+      "totalMs": 165000
+    }
+  },
+  "mobile": {
+    "timings": {
+      "bootstrapMs": 42000,
+      "e2eMs": 50000,
+      "logGuardMs": 1000,
+      "preflightMs": 1000,
+      "setupGuardMs": 1000,
+      "totalMs": 95000
+    }
+  },
+  "web": {
+    "timings": {
+      "bootstrapMs": 42000,
+      "e2eMs": 70000,
+      "logGuardMs": 1000,
+      "preflightMs": 1000,
+      "setupGuardMs": 1000,
+      "totalMs": 115000
+    }
+  }
+}

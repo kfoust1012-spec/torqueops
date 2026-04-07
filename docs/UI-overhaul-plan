@@ -1,0 +1,1115 @@
+# UI Overhaul Plan
+
+This document is the working reference for the product redesign of the mobile mechanic operations platform. It consolidates the redesign strategy, current-state audit, design system foundation, and front-end implementation roadmap so future implementation work does not depend on chat context.
+
+## Objective
+
+Transform the application from a functional but visually generic internal tool into a premium operational control system for automotive service businesses.
+
+The product should feel:
+
+- premium
+- precise
+- trustworthy
+- calm
+- fast
+- operational
+- high-clarity
+- modern without being trendy
+- automotive-adjacent without visual cliches
+
+## Design Direction
+
+The redesign should follow a premium service command language:
+
+- warm premium light theme
+- rich neutrals
+- strong typography
+- disciplined spacing
+- refined hierarchy
+- elevated but restrained surfaces
+- powerful dispatch and workflow screens
+- high-end SaaS quality
+- world-class interaction polish
+
+Avoid:
+
+- generic startup SaaS styling
+- bright-blue identity
+- ERP blandness
+- racing and macho automotive cliches
+- cartoonish or playful UI
+- dark mode as the main visual identity
+- oversized padding that harms information density
+
+## Non-Negotiables
+
+- Do not break existing business logic.
+- Improve the system holistically, not screen by screen in isolation.
+- Build the design system first.
+- Create one cohesive visual language across all modules.
+- Make interactions feel intentional and refined.
+- Dispatch must become a flagship hero screen.
+- Parts and Inventory must feel like real operational workspaces.
+- Empty states, loading states, filters, forms, and navigation must be premium.
+
+## Current Product Audit
+
+### System-Level Verdict
+
+The product is functionally serious but visually reads as a competent internal admin tool. The operational depth exists, but the visual layer does not communicate confidence, hierarchy, or premium quality.
+
+Three UI languages are currently competing:
+
+1. Legacy `workspace-*` and older page-level styling patterns
+2. Newer shared `ui-*` primitives
+3. Bespoke styling for dispatch and selected advanced workflows
+
+That fragmentation is a major root cause of the current low-polish feel.
+
+### Module Audit
+
+| Module | Verdict | Key Problems | Premium vs Generic |
+| --- | --- | --- | --- |
+| Overview | Feels like a dressed-up empty state, not a control center | weak hierarchy, dead space, low operational urgency | 15 / 85 |
+| Customers | Generic CRUD registry | shallow composition, weak row hierarchy, no split-view depth | 5 / 95 |
+| Vehicles | Customers clone with more data noise | repeated layout pattern, no distinct workspace identity | 5 / 95 |
+| Jobs | First module that starts to feel operational | still template-driven, cramped filters, flat action hierarchy | 25 / 75 |
+| Dispatch | Strongest current screen and clear hero candidate | top area too busy, board still lacks enough authority | 45 / 55 |
+| Parts | Serious workflow depth trapped in generic cards | poor task staging, weak hierarchy between workflow areas | 30 / 70 |
+| Inventory | Looks unfinished when empty | placeholder-like workspace, passive empty states | 15 / 85 |
+
+### Additional High-Value Screens
+
+- Job detail
+- Parts request detail
+- Inventory item and location flows
+- Estimate workspace
+
+These should be treated as major redesign surfaces, not secondary cleanup.
+
+### What Makes the UI Feel Visually Weak
+
+- Too many generic cards with similar weight
+- Weak shell and navigation presence
+- Low contrast between page, surface, and workspace layers
+- Underpowered typography below page titles
+- Too much dead desktop space
+- Sparse layouts that feel unfinished rather than calm
+- Inconsistent status and action emphasis
+
+### What Makes It Feel Disorganized
+
+- Mixed legacy and modern component systems
+- Repeated but inconsistent page anatomy
+- Competing interaction patterns for similar tasks
+- No clear distinction between registry pages, queue pages, and command-center pages
+- Local screen styling solving system problems ad hoc
+
+### What Makes It Feel Low-Polish
+
+- Generic tables and forms
+- Passive empty states and loading states
+- Weak active-navigation treatment
+- Inconsistent action hierarchy
+- Uneven panel composition
+- Lack of intentional motion and state feedback
+
+### Biggest Opportunities
+
+- Unify the full product under one operational design system
+- Rebuild the shell and navigation
+- Turn Overview into a real operating brief
+- Make Jobs the triage queue between intake and dispatch
+- Make Dispatch the flagship operational canvas
+- Turn Parts into a procurement desk
+- Turn Inventory into a stock-control tower
+
+### Hero Screens
+
+- Dispatch command center
+- Job detail workspace
+- Parts request sourcing workflow
+- Inventory control and item/location workspaces
+- Estimate workspace
+
+Overview should be strong, but it should function as an operations brief rather than a theatrical hero.
+
+## Design Vision
+
+### Brand and Interface Personality
+
+- Emotional tone: calm authority, grounded precision, restrained confidence
+- Interface character: service command center rather than startup dashboard
+- For shop owners: organized, dependable, and built for real operational pressure
+- For mechanics and dispatchers: fast to read, hard to misread, and respectful of workflow reality
+
+### Trust and Quality Traits
+
+- Warm low-glare neutrals
+- Strong type hierarchy
+- Dense but readable layouts
+- Consistent action semantics
+- Clear operational states
+- Restrained accent usage
+- Purposeful motion
+
+## Visual System Foundation
+
+### Color System
+
+Core surfaces:
+
+- `--bg-page: #F4F0E8`
+- `--surface-elevated: #FFFFFF`
+- `--surface-primary: #FFFCF7`
+- `--surface-secondary: #F7F1E7`
+- `--surface-utility: #EEE6DA`
+
+Borders:
+
+- `--border-subtle: #DED6CA`
+- `--border-default: #CFC4B5`
+- `--border-strong: #B6AA98`
+
+Text:
+
+- `--text-strong: #17212B`
+- `--text-secondary: #3A4654`
+- `--text-muted: #6D7784`
+
+Accent and interaction:
+
+- `--accent-primary: #243B53`
+- `--accent-hover: #1D3146`
+- `--accent-active: #142536`
+- `--focus-ring: rgba(36, 59, 83, 0.18)`
+- `--selected-fill: #E9EFF5`
+
+Semantic states:
+
+- `--success: #2D7A57`
+- `--warning: #B97928`
+- `--danger: #B24B3C`
+- `--info: #3E6C94`
+
+Support tone:
+
+- `--copper-label: #9D6A2E`
+
+Data visualization tones:
+
+- `#314A68`
+- `#527496`
+- `#7A9173`
+- `#C08A42`
+- `#B56C52`
+- `#8A96A4`
+
+Rationale:
+
+- Warm mineral neutrals reduce glare and feel premium over long operational sessions.
+- Deep ink blue conveys control and trust without defaulting to bright SaaS blue.
+- Copper adds warmth and service character without turning into a theme gimmick.
+- Semantic colors are intentionally desaturated so the interface feels operational rather than gamified.
+
+### Typography System
+
+Font pairing:
+
+- Titles and metrics: `Manrope`
+- Body, forms, tables: `Source Sans 3`
+- IDs, VIN fragments, SKUs, times, financial and utility data: `IBM Plex Mono`
+
+Type scale:
+
+- Page title: `40/44` desktop, `34/40` tablet, `28/34` mobile, weight `750-800`, tracking `-0.03em`
+- Section header: `24/30`, weight `700`, tracking `-0.02em`
+- Card title: `18/24`, weight `650-700`
+- Body: `15/22`
+- Large body: `16/24`
+- Compact body and table meta: `13/18`
+- Labels: `12/16`, weight `600`
+- Helper text: `13/18`
+- Eyebrow: `11/16`, uppercase, tracking `0.12em`, weight `700`
+- Metric numbers: `34/36` standard, `44/44` hero, tabular numerals, weight `700-800`
+
+Rules:
+
+- Tight line-height on titles: `1.05-1.15`
+- Body line-height: `1.45`
+- Utility and meta line-height: `1.3`
+- Avoid decorative display effects on operational type
+
+### Layout System
+
+- Standard page max width: `1440px`
+- Command and operations modules can expand to `1600-1680px`
+- Grid: `12` columns desktop, `8` tablet, `4` mobile
+- Gutters: `24px` desktop, `20px` tablet, `16px` mobile
+- Major section spacing: `32-40px`
+- Related panel spacing: `20-24px`
+- Utility grouping spacing: `12-16px`
+- Panel padding: `20px` default, `16px` compact, `28px` hero
+
+Density strategy:
+
+- High information usefulness without feeling cramped
+- No oversized whitespace for visual theater
+- Dense work should become structured, not sparse
+
+Responsive philosophy:
+
+- Preserve task order before aesthetic symmetry
+- Keep filters and actions visible and grouped
+- Side rails should collapse only when necessary
+
+### Radius, Borders, and Elevation
+
+Radius scale:
+
+- `8`
+- `12`
+- `16`
+- `20`
+- `999`
+
+Elevation:
+
+- `elevation-0`: flat workspace surfaces
+- `elevation-1`: grouped panels and toolbars
+- `elevation-2`: drawers
+- `elevation-3`: modals
+
+Usage rules:
+
+- Use tonal separation first, shadows second
+- Prefer flat bordered work surfaces for tables and dense editors
+- Use elevation to distinguish overlays and high-priority support surfaces, not as decoration
+
+### Interaction System
+
+State behavior:
+
+- Hover: subtle contrast lift and optional slight elevation on interactive panels
+- Pressed: darken `6-8%`, reduce elevation
+- Selected: fill plus border plus text shift together
+- Focus: `2px` outer ring plus border shift
+
+Timing:
+
+- Hover transitions: `120ms`
+- Control state transitions: `180ms`
+- Panel and drawer transitions: `220ms`
+- Route-level transitions: `280ms`
+
+Motion style:
+
+- Short, directional, friction-aware
+- Use fade plus `8-12px` travel
+- Avoid springy, playful motion
+
+Dispatch drag and drop:
+
+- Lifted card shadow
+- Lane glow on valid targets
+- Conflict warning tint for invalid or overloaded states
+- Snap-to-slot settle on drop
+
+### Density Strategy by Module
+
+- Overview: balanced
+- Customers: compact
+- Vehicles: compact
+- Jobs: balanced-compact
+- Dispatch: dense
+- Parts: balanced-dense
+- Inventory: balanced-dense
+- Detail workspaces: balanced header, dense primary canvas, compact support rails
+
+### Do and Don't Rules
+
+Do:
+
+- Use one clear primary action per region
+- Differentiate registry, queue, command-center, and detail workspace page types
+- Keep accent color meaningful and scarce
+- Make statuses, timings, and metrics feel authoritative
+- Make empty states specific and actionable
+
+Don't:
+
+- Use bright blue as identity
+- Use giant padding that kills density
+- Let every panel look identical
+- Mix legacy `workspace-*` styling with new system patterns
+- Use glossy gradients, playful iconography, or oversized radii
+- Rely on color alone for critical state
+
+## Front-End Implementation Plan
+
+### Existing Technical Seams
+
+The implementation should route through the existing design and shell seams:
+
+- `packages/core/src/design/tokens.ts`
+- `apps/web/app/design-system.css`
+- `apps/web/app/globals.css`
+- `apps/web/components/ui/*`
+- `apps/web/app/dashboard/layout.tsx`
+
+The central rule is to turn the `ui-*` shared layer into the only shared visual language over time and retire legacy `workspace-*` styling patterns.
+
+### Global CSS and Token Architecture
+
+Source of truth:
+
+- Keep authored design tokens in `packages/core/src/design/tokens.ts`
+- Generate runtime CSS custom properties from that token source
+
+Authoring layers:
+
+1. `base`
+2. `shell`
+3. `components`
+4. `patterns`
+5. `modules`
+
+Rules:
+
+- `globals.css` should only handle resets, root defaults, browser normalization, and font smoothing
+- `design-system.css` should own visual styling
+- Modules may define workflow-specific layout, but shared primitives must not be re-skinned locally
+- No new legacy `workspace-*` styles should be introduced
+
+### Design Tokens
+
+Spacing tokens:
+
+- `0, 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80`
+- Semantic aliases for `page`, `section`, `panel`, `cluster`, `control-gap`
+
+Typography tokens:
+
+- `font-family-title`
+- `font-family-body`
+- `font-family-mono`
+- `type-page-title`
+- `type-section-title`
+- `type-card-title`
+- `type-body`
+- `type-body-sm`
+- `type-label`
+- `type-helper`
+- `type-eyebrow`
+- `type-metric`
+
+Color tokens:
+
+- `bg-page`
+- `surface-primary`
+- `surface-secondary`
+- `surface-utility`
+- `surface-elevated`
+- `border-subtle`
+- `border-default`
+- `border-strong`
+- `text-strong`
+- `text-secondary`
+- `text-muted`
+- `accent`
+- `accent-hover`
+- `accent-active`
+- `focus-ring`
+- `selection`
+- semantic state colors
+
+Elevation tokens:
+
+- `elevation-0`
+- `elevation-1`
+- `elevation-2`
+- `elevation-3`
+- Semantic aliases such as `surface-flat`, `surface-raised`, `surface-command`, `surface-overlay`
+
+Radius tokens:
+
+- `radius-xs`
+- `radius-sm`
+- `radius-md`
+- `radius-lg`
+- `radius-pill`
+
+Motion tokens:
+
+- `duration-fast`
+- `duration-base`
+- `duration-panel`
+- `duration-route`
+- `ease-standard`
+- `ease-enter`
+- `ease-exit`
+- `ease-snap`
+- motion distances for `micro`, `panel`, and `drawer`
+
+### Shared Component Variants
+
+Buttons:
+
+- `primary`
+- `secondary`
+- `ghost`
+- `destructive`
+- `icon-only`
+
+Button sizes:
+
+- `sm`
+- `md`
+- `lg`
+- density modifiers for `compact` and `default`
+
+Form controls:
+
+- `Input`
+- `Textarea`
+- `Select`
+- `DateField`
+- `SearchField`
+- `InlineFilterField`
+
+Panel system:
+
+- `Panel`
+- `PanelHeader`
+- `PanelBody`
+- `PanelFooter`
+- `PanelHero`
+- `PanelRail`
+- `StatTile`
+- `MetricStrip`
+
+Shell and page chrome:
+
+- `AppShell`
+- `Sidebar`
+- `NavSection`
+- `NavItem`
+- `Page`
+- `PageHeader`
+- `PageActions`
+- `CommandBar`
+- `FilterBar`
+- `SplitLayout`
+- `Rail`
+
+Data display:
+
+- `DataTable`
+- `TableToolbar`
+- `TableRowActions`
+- `ListRow`
+- `QueueRow`
+- `TimelineRow`
+- `LedgerRow`
+
+State system:
+
+- `EmptyState`
+- `LoadingState`
+- `ErrorState`
+- `InlineAlert`
+- `Toast`
+- `SkeletonBlock`
+- `SkeletonRow`
+- `SkeletonPanel`
+
+Overlays:
+
+- `Drawer`
+- `Modal`
+- `ConfirmDialog`
+- `QuickEditPanel`
+
+Status system:
+
+- `Badge`
+- `StatusBadge`
+- `PriorityBadge`
+- `SeverityBadge`
+- selected, pending, and attention treatments at row level
+
+### Page Shell Structure
+
+The core shell should be:
+
+- fixed or persistent sidebar
+- fluid main content column
+- optional secondary contextual rail
+
+Pages should not all share one narrow centered container. Use template-specific max widths based on page type.
+
+### Sidebar and Navigation Structure
+
+Sidebar anatomy:
+
+- company or workspace block
+- primary navigation group
+- utility or secondary navigation group
+- user/account area
+
+Navigation behavior:
+
+- stronger active-state treatment than the current minimal list
+- compact, information-dense presentation
+- obvious grouping between operational modules and utilities
+
+### Page Header Structure
+
+Every major screen should use a standard header anatomy:
+
+- eyebrow
+- page title
+- short description or current context
+- context badge cluster when needed
+- action group
+
+This pattern must apply consistently across registries, queues, workspaces, and detail screens.
+
+### Panel and Card System
+
+Stop treating every content container as the same card. Standardize:
+
+- flat panel
+- raised panel
+- hero panel
+- rail panel
+- state panel
+
+Use panel semantics rather than card cosmetics.
+
+### Table and List System
+
+Define distinct shared patterns:
+
+- registry tables
+- queue tables
+- ledger tables
+- list rows
+- timeline rows
+
+Shared table behavior:
+
+- sticky headers
+- stronger primary cell text
+- muted meta text
+- right-aligned numeric columns
+- better hover and selected states
+
+### Form System
+
+Standardize:
+
+- `Form`
+- `FormSection`
+- `FormRow`
+- `FormField`
+- `FormActionBar`
+- `InlineActionField`
+
+Forms should feel guided and premium, not purely utilitarian.
+
+### Status and Badge System
+
+Statuses must be governed by one shared tone system. No page-level status reinvention.
+
+Status types:
+
+- neutral
+- info
+- success
+- warning
+- danger
+- attention
+- draft
+- scheduled
+- blocked
+- completed
+
+### Empty, Loading, and Error State System
+
+Use one global state system with:
+
+- panel-level states
+- inline states
+- full-page states
+
+All states should:
+
+- explain what is happening
+- clarify why it matters
+- offer the next action when appropriate
+
+## What To Create First
+
+1. Expand `packages/core/src/design/tokens.ts` into the full token map.
+2. Reorganize `apps/web/app/design-system.css` into layered design-system structure.
+3. Simplify `apps/web/app/globals.css` so it stops competing with the design system.
+4. Rebuild `apps/web/app/dashboard/layout.tsx` with the new shell, navigation, and page-width rules.
+5. Establish the rule that all new visual work lands through shared primitives and patterns.
+
+## Shared Components To Rebuild Next
+
+- Button
+- Badge
+- Input
+- Select
+- Textarea
+- FormField
+- FormSection
+- Panel family
+- Table and list-row families
+- PageHeader
+- CommandBar
+- FilterBar
+- StatTile
+- Drawer
+- QuickEditPanel
+
+## Page Templates To Standardize
+
+### Registry Template
+
+- page header
+- filter bar
+- registry table or list
+- optional split-detail rail
+
+### Queue Template
+
+- page header
+- metric strip
+- sticky filters
+- queue list or table
+- quick actions
+
+### Command-Center Template
+
+- hero header
+- command bar
+- left rail or support rail
+- main operational canvas
+- quick-edit drawer
+
+### Detail and Edit Workspace Template
+
+- contextual header
+- main content column
+- sticky operational rail
+- related activity or timeline region
+
+### Settings and Integration Template
+
+- page header
+- state and health panels
+- grouped form sections
+- attention rail
+
+### Onboarding and State-Heavy Template
+
+- hero state panel
+- next-step actions
+- supporting explanation panels
+
+## Module Redesign Order
+
+### First Pass
+
+- Overview
+- Jobs
+- Dispatch
+
+These define whether the product feels operational or generic.
+
+### Second Pass
+
+- Parts workspace
+- Parts request detail
+
+These should build on the queue, panel, and drawer patterns established in the first pass.
+
+### Third Pass
+
+- Inventory workspace
+- Inventory items
+- Inventory locations
+- Transfers and adjustments
+
+### Fourth Pass
+
+- Customers
+- Vehicles
+- customer detail
+- vehicle detail
+
+### Fifth Pass
+
+- Estimate workspace
+- Invoice workspace
+- auth and login
+- public-facing document surfaces
+
+## Work To Defer Until After the Main Shell
+
+- Bespoke polish on secondary pages
+- Advanced motion tuning beyond the base motion system
+- Public document redesigns
+- Deep settings and integrations
+- Decorative charts and illustration work
+- Final mobile-specific polish
+
+## Screen-by-Screen Redesign Roadmap
+
+### Overview
+
+Visual changes:
+
+- shift from dashboard starter page to operational brief
+- stronger metric strip
+- more authority in exception and attention panels
+
+Structural changes:
+
+- hero strip
+- urgent actions
+- key queues and exceptions
+- cross-module summary panels
+
+Shared components:
+
+- `PageHeader`
+- `MetricStrip`
+- `AttentionPanel`
+- `QueuePanel`
+
+New variants:
+
+- `hero`
+- `attention`
+- `summary`
+
+### Jobs List
+
+Visual changes:
+
+- move from generic table page to triage queue
+- stronger status and priority hierarchy
+
+Structural changes:
+
+- metrics plus sticky filters plus queue rows
+
+Shared components:
+
+- `FilterBar`
+- `QueueRow`
+- `PriorityBadge`
+
+New variants:
+
+- `queue-row`
+- `row-meta`
+
+### Dispatch
+
+Visual changes:
+
+- simplify the busy top zone
+- give the board more authority and breathing room
+
+Structural changes:
+
+- command header
+- filter and support rail
+- lane board canvas
+- quick-edit drawer
+
+Shared components:
+
+- `CommandBar`
+- `SegmentedControl`
+- `Drawer`
+- `StatusChip`
+
+New variants:
+
+- `dispatch-command`
+- `drag-preview`
+- `lane-accent`
+- `conflict`
+
+### Customers
+
+Visual changes:
+
+- quiet premium registry with stronger row hierarchy
+
+Structural changes:
+
+- filter bar
+- registry table or list
+- split detail preview
+
+Shared components:
+
+- `RegistryTable`
+- `ListRow`
+- `EmptyState`
+
+New variants:
+
+- mostly shared defaults
+
+### Vehicles
+
+Visual changes:
+
+- same registry family as Customers but with stronger vehicle identity treatment
+
+Structural changes:
+
+- same registry and split detail pattern
+
+Shared components:
+
+- `RegistryTable`
+- `ListRow`
+- `MonoData`
+
+New variants:
+
+- `vehicle-id`
+- `mono-data`
+
+### Job Detail
+
+Visual changes:
+
+- replace mixed-era panels with a true operational workspace
+
+Structural changes:
+
+- contextual header
+- primary content canvas
+- sticky status and action rail
+- timeline or activity region
+
+Shared components:
+
+- `DetailWorkspace`
+- `TimelineRow`
+- `ActionRail`
+- `ArtifactStatusStrip`
+
+New variants:
+
+- `detail-hero`
+- `artifact-summary`
+- `timeline`
+
+### Parts Workspace
+
+Visual changes:
+
+- shift from card collage to procurement desk
+
+Structural changes:
+
+- request queue
+- provider attention rail
+- carts and purchase order surfaces
+
+Shared components:
+
+- `QueuePanel`
+- `ProviderCard`
+- `StatePanel`
+
+New variants:
+
+- `provider-status`
+- `manual-attention`
+- `fulfillment`
+
+### Parts Request Detail
+
+Visual changes:
+
+- become a hero workflow screen instead of a fragmented admin detail page
+
+Structural changes:
+
+- request summary
+- request lines table
+- provider panes
+- linked carts and purchase order rail
+
+Shared components:
+
+- `RequestLineTable`
+- `ProviderSessionPanel`
+- `ActionRail`
+
+New variants:
+
+- `provider-session`
+- `quote-row`
+- `request-summary`
+
+### Inventory Workspace
+
+Visual changes:
+
+- move from placeholder feel to stock-control tower
+
+Structural changes:
+
+- health strip
+- movement panels
+- action rail
+- guided onboarding states
+
+Shared components:
+
+- `MetricStrip`
+- `HealthPanel`
+- `LedgerList`
+
+New variants:
+
+- `stock-health`
+- `location-health`
+- `empty-onboarding`
+
+### Inventory Items, Locations, Transfers
+
+Visual changes:
+
+- compact operational editors instead of generic forms
+
+Structural changes:
+
+- detail or edit workspace with sticky operational rails
+
+Shared components:
+
+- `FormSection`
+- `BalanceTable`
+- `LedgerRow`
+
+New variants:
+
+- `ledger-row`
+- `stock-setting`
+- `adjustment`
+
+### Estimate and Invoice Workspaces
+
+Visual changes:
+
+- align to the new operational command language rather than looking like a separate product
+
+Structural changes:
+
+- keep advanced workflow structure but normalize headers, rails, panels, and state treatments
+
+Shared components:
+
+- use the standard workspace family built earlier
+
+New variants:
+
+- add only what the billing artifact workflow genuinely requires
+
+### Auth and Public Surfaces
+
+Visual changes:
+
+- elevate trust and polish at the front door
+
+Structural changes:
+
+- simplified shell and premium document surfaces
+
+Shared components:
+
+- `AuthPanel`
+- `DocumentPanel`
+- `StatePanel`
+
+New variants:
+
+- keep minimal and aligned with the system
+
+## Top 20 Problems Ranked by Severity
+
+1. Multiple competing visual systems create identity drift.
+2. Page anatomy is inconsistent across modules.
+3. The shell and navigation are too weak for an operational platform.
+4. Overview does not function as a command center.
+5. Customers and Vehicles feel interchangeable.
+6. Action hierarchy is too flat.
+7. Typography below the H1 level is underpowered.
+8. Surface hierarchy is too subtle.
+9. Dispatch header is cluttered while the board still lacks authority.
+10. Parts has real depth but poor workflow staging.
+11. Inventory feels unfinished in empty and low-data states.
+12. Tables are functional but not premium or especially scannable.
+13. Forms feel utilitarian instead of guided.
+14. Empty states are passive and visually cheap.
+15. Large desktop areas are underused.
+16. Module differentiation is weak.
+17. Status and priority language is not cohesive.
+18. Detail pages drift back into older styling patterns.
+19. Interaction feedback and motion are underdeveloped.
+20. High-value screen stability and trust issues are visually catastrophic when they appear.
+
+## Top 20 Opportunities Ranked by Impact
+
+1. Unify the product under one operational design system.
+2. Rebuild the global shell and navigation.
+3. Turn Overview into a live operating brief.
+4. Make Jobs the central triage queue.
+5. Make Dispatch the flagship hero module.
+6. Turn Parts into a staged procurement desk.
+7. Turn Inventory into a control tower.
+8. Replace generic cards with semantic panel types.
+9. Redesign tables for scan speed and inline utility.
+10. Create split-view registries for Customers and Vehicles.
+11. Standardize filter bars and saved views.
+12. Rebuild forms around grouped sections and action clarity.
+13. Upgrade empty, loading, and error states into designed workflow states.
+14. Strengthen metric presentation.
+15. Improve type scale and numeric data treatment.
+16. Increase contrast between page, panel, and workspace layers.
+17. Add supporting visual context where useful.
+18. Define one clear action hierarchy model.
+19. Add restrained, purposeful motion.
+20. Use Dispatch and advanced workspaces as reference quality, then lift the rest of the app to that standard.
+
+## Execution Order
+
+1. Token architecture and CSS layering
+2. App shell and navigation
+3. Shared primitives
+4. Shared patterns and templates
+5. Overview and Jobs
+6. Dispatch
+7. Parts workspace and request detail
+8. Inventory workspace and item or location flows
+9. Customers and Vehicles
+10. Detail workspaces, estimates, invoices, auth, public surfaces, and final polish
+
+## Working Rule for Future Implementation
+
+Do not solve a page problem locally if it is really a token, component, shell, or template problem. The redesign only stays coherent if foundational issues are solved at the system level first.

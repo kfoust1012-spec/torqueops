@@ -1,0 +1,1 @@
+export { default } from "../../../inventory/cycle-counts/page";

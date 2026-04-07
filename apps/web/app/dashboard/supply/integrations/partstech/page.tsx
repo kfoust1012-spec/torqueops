@@ -1,0 +1,1 @@
+export { SupplyPartsTechIntegrationPageImpl as default } from "../../../parts/integrations/partstech/page";

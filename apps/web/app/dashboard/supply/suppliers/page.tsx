@@ -1,0 +1,1 @@
+export { SupplySuppliersPageImpl as default } from "../../parts/suppliers/page";

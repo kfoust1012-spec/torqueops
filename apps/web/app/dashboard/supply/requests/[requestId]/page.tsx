@@ -1,0 +1,1 @@
+export { SupplyRequestDetailPageImpl as default } from "../../../parts/requests/[requestId]/page";

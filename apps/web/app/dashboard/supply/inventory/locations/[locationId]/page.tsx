@@ -1,0 +1,1 @@
+export { SupplyInventoryLocationDetailPageImpl as default } from "../../../../inventory/locations/[locationId]/page";

@@ -1,0 +1,15 @@
+{
+  "name": "@mobile-mechanic/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "install:browsers": "node ../../tooling/scripts/ensure-playwright-browsers.mjs chromium",
+    "test:mobile": "playwright test tests/mobile-guided-stop.spec.ts tests/office-to-field-flow.spec.ts",
+    "test": "playwright test",
+    "test:web": "playwright test tests/web-command-center.spec.ts tests/web-write-flows.spec.ts",
+    "test:headed": "playwright test --headed"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.51.1"
+  }
+}

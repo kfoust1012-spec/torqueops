@@ -1,0 +1,1 @@
+export { SupplyListDetailPageImpl as default } from "../../../parts/supplies/[listId]/page";

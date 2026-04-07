@@ -1,0 +1,1 @@
+export { SupplyAmazonBusinessIntegrationPageImpl as default } from "../../../parts/integrations/amazon-business/page";

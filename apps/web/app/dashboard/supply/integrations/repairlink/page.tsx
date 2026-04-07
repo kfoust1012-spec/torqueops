@@ -1,0 +1,1 @@
+export { SupplyRepairLinkIntegrationPageImpl as default } from "../../../parts/integrations/repairlink/page";

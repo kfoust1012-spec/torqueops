@@ -1,0 +1,176 @@
+name: E2E Regression
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  detect-targets:
+    name: Detect E2E targets
+    runs-on: ubuntu-latest
+    outputs:
+      mobile: ${{ steps.detect.outputs.mobile }}
+      web: ${{ steps.detect.outputs.web }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed e2e targets
+        id: detect
+        env:
+          GITHUB_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node tooling/scripts/detect-e2e-targets.mjs
+
+  e2e:
+    name: E2E Regression (${{ matrix.target }})
+    needs: detect-targets
+    if: |
+      ${{
+        (matrix.target == 'web' && needs.detect-targets.outputs.web == 'true') ||
+        (matrix.target == 'mobile' && needs.detect-targets.outputs.mobile == 'true')
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: web
+            artifact_name: playwright-artifacts-web
+            log_file: .artifacts/e2e/web-e2e-ci.log
+            setup_log_file: .artifacts/e2e/web-e2e-ci-setup.log
+            ci_command: pnpm test:e2e:web:ci
+          - target: mobile
+            artifact_name: playwright-artifacts-mobile
+            log_file: .artifacts/e2e/mobile-e2e-ci.log
+            setup_log_file: .artifacts/e2e/mobile-e2e-ci-setup.log
+            ci_command: pnpm test:e2e:mobile:ci
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup e2e environment
+        uses: ./.github/actions/setup-e2e
+
+      - name: Run e2e regression suite
+        run: ${{ matrix.ci_command }}
+
+      - name: Resolve latest successful main timing baseline
+        if: always()
+        id: resolve-baseline
+        uses: actions/github-script@v7
+        env:
+          E2E_TARGET: ${{ matrix.target }}
+        with:
+          script: |
+            const workflowRef = process.env.GITHUB_WORKFLOW_REF ?? "";
+            const workflowPath = workflowRef.includes("@")
+              ? workflowRef.split("@")[0].split("/").slice(2).join("/")
+              : ".github/workflows/e2e.yml";
+            const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: workflowPath,
+              branch: "main",
+              event: "push",
+              status: "completed",
+              per_page: 50
+            });
+            const currentRunId = Number(process.env.GITHUB_RUN_ID || "0");
+            const baselineRun = runs.find((run) => run.conclusion === "success" && run.id !== currentRunId);
+            const recentRuns = runs
+              .filter((run) => run.conclusion === "success" && run.id !== currentRunId)
+              .slice(0, 7);
+
+            core.setOutput("artifact_name", `e2e-timing-summary-${process.env.E2E_TARGET}`);
+            core.setOutput("run_id", baselineRun ? String(baselineRun.id) : "");
+            core.setOutput("recent_run_ids", JSON.stringify(recentRuns.map((run) => run.id)));
+
+            if (baselineRun) {
+              core.info(`Using main baseline run ${baselineRun.id} for ${process.env.E2E_TARGET}.`);
+            } else {
+              core.info(`No successful main baseline run was found for ${process.env.E2E_TARGET}; falling back to the checked-in timing baseline.`);
+            }
+
+            core.info(`Collected ${recentRuns.length} recent successful main runs for ${process.env.E2E_TARGET} timing history.`);
+
+      - name: Download latest successful main timing baseline
+        if: always() && steps.resolve-baseline.outputs.run_id != ''
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.resolve-baseline.outputs.run_id }}
+          name: ${{ steps.resolve-baseline.outputs.artifact_name }}
+          path: .artifacts/e2e/main-baseline/${{ matrix.target }}
+
+      - name: Download recent successful main timing history
+        if: always() && steps.resolve-baseline.outputs.recent_run_ids != '[]'
+        continue-on-error: true
+        env:
+          ARTIFACT_NAME: ${{ steps.resolve-baseline.outputs.artifact_name }}
+          GH_TOKEN: ${{ github.token }}
+          RECENT_RUN_IDS: ${{ steps.resolve-baseline.outputs.recent_run_ids }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          mkdir -p ".artifacts/e2e/main-history/${TARGET}"
+          node -e "const ids = JSON.parse(process.env.RECENT_RUN_IDS || '[]'); for (const id of ids) console.log(id);" > .artifacts/e2e/recent-main-run-ids.txt
+          while IFS= read -r run_id; do
+            [ -z "$run_id" ] && continue
+            target_dir=".artifacts/e2e/main-history/${TARGET}/${run_id}"
+            mkdir -p "$target_dir"
+            gh run download "$run_id" --name "$ARTIFACT_NAME" --dir "$target_dir" || true
+          done < .artifacts/e2e/recent-main-run-ids.txt
+
+      - name: Report timing summary, annotations, and gate result
+        if: always()
+        uses: ./.github/actions/report-e2e-timing
+        with:
+          enforce: ${{ github.event_name == 'pull_request' && 'true' || 'false' }}
+          target: ${{ matrix.target }}
+
+      - name: Upload timing summary artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-timing-summary-${{ matrix.target }}
+          path: .artifacts/e2e/${{ matrix.target }}-e2e-ci-summary.json
+          if-no-files-found: ignore
+
+      - name: Upload timing decision artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-timing-decision-${{ matrix.target }}
+          path: .artifacts/e2e/${{ matrix.target }}-timing-decision.json
+          if-no-files-found: ignore
+
+      - name: Upload Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: |
+            ${{ matrix.setup_log_file }}
+            ${{ matrix.log_file }}
+            .artifacts/e2e/bootstrap-last-run.json
+            .artifacts/e2e/playwright-browser-install-last-run.json
+            .artifacts/e2e/prepare-last-run.json
+            .artifacts/e2e/${{ matrix.target }}-e2e-ci-summary.json
+            .artifacts/e2e/${{ matrix.target }}-timing-decision.json
+            apps/e2e/playwright-report
+            apps/e2e/test-results
+          if-no-files-found: ignore

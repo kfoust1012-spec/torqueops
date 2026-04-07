@@ -1,0 +1,86 @@
+{
+  "rows": [
+    {
+      "key": "totalMs",
+      "label": "Total",
+      "severity": "error",
+      "baselineMinMs": 20000,
+      "minDeltaMs": 5000,
+      "minPercentDelta": 15
+    },
+    {
+      "key": "bootstrapMs",
+      "label": "Bootstrap",
+      "severity": "error",
+      "baselineMinMs": 20000,
+      "minDeltaMs": 5000,
+      "minPercentDelta": 15
+    },
+    {
+      "key": "e2eMs",
+      "label": "Playwright",
+      "severity": "error",
+      "baselineMinMs": 20000,
+      "minDeltaMs": 5000,
+      "minPercentDelta": 15
+    },
+    {
+      "key": "preflightMs",
+      "label": "Preflight",
+      "severity": "warning",
+      "noisy": true,
+      "baselineMinMs": 0,
+      "minDeltaMs": 2500,
+      "minPercentDelta": 100
+    },
+    {
+      "key": "setupGuardMs",
+      "label": "Setup guard",
+      "severity": "warning",
+      "noisy": true,
+      "baselineMinMs": 0,
+      "minDeltaMs": 1000,
+      "minPercentDelta": 100
+    },
+    {
+      "key": "logGuardMs",
+      "label": "Startup/auth guard",
+      "severity": "warning",
+      "noisy": true,
+      "baselineMinMs": 0,
+      "minDeltaMs": 1000,
+      "minPercentDelta": 100
+    }
+  ],
+  "specialCases": {
+    "preparedStateSkipFullBrowserInstall": {
+      "label": "Playwright browser install",
+      "message": "Prepared-state skip still triggered a full Playwright browser install.",
+      "severity": "error",
+      "noisy": false
+    }
+  },
+  "targets": {
+    "mobile": {
+      "rows": {
+        "e2eMs": {
+          "minDeltaMs": 7000,
+          "minPercentDelta": 18
+        },
+        "preflightMs": {
+          "baselineMinMs": 5000,
+          "minDeltaMs": 4000,
+          "minPercentDelta": 150
+        }
+      }
+    },
+    "web": {
+      "rows": {
+        "preflightMs": {
+          "minDeltaMs": 2500,
+          "minPercentDelta": 100
+        }
+      }
+    }
+  }
+}

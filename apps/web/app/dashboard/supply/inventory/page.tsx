@@ -1,0 +1,1 @@
+export { InventoryWorkspacePageImpl as default } from "../../inventory/page";
