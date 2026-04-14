@@ -1,0 +1,136 @@
+name: Background Processing
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+    - cron: "*/15 * * * *"
+    - cron: "17,47 * * * *"
+  workflow_dispatch:
+    inputs:
+      run_communications:
+        description: "Run the production communications processor"
+        required: false
+        default: true
+        type: boolean
+      run_imports:
+        description: "Run the production imports processor"
+        required: false
+        default: true
+        type: boolean
+      run_labor_guide:
+        description: "Run the production labor-guide refresh"
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  production-communications:
+    name: Production communications processor
+    if: |
+      ${{
+        (
+          github.event_name == 'schedule' &&
+          github.event.schedule == '*/5 * * * *'
+        ) ||
+        (
+          github.event_name == 'workflow_dispatch' &&
+          inputs.run_communications
+        )
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PROCESS_SECRET: ${{ secrets.PROD_COMMUNICATIONS_PROCESS_SECRET }}
+      TARGET_URL: ${{ secrets.PROD_WEB_APP_URL }}
+
+    steps:
+      - name: Guard missing production scheduler config
+        if: ${{ env.PROCESS_SECRET == '' || env.TARGET_URL == '' }}
+        run: |
+          echo "Skipping production communications processor because PROD_WEB_APP_URL or PROD_COMMUNICATIONS_PROCESS_SECRET is not configured."
+
+      - name: Invoke communications processor
+        if: ${{ env.PROCESS_SECRET != '' && env.TARGET_URL != '' }}
+        run: |
+          curl --fail --silent --show-error \
+            --retry 2 \
+            --retry-all-errors \
+            --retry-delay 5 \
+            -X POST "${TARGET_URL%/}/api/internal/communications/process" \
+            -H "Authorization: Bearer ${PROCESS_SECRET}" \
+            -H "Content-Type: application/json"
+
+  production-imports:
+    name: Production imports processor
+    if: |
+      ${{
+        (
+          github.event_name == 'schedule' &&
+          github.event.schedule == '*/15 * * * *'
+        ) ||
+        (
+          github.event_name == 'workflow_dispatch' &&
+          inputs.run_imports
+        )
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PROCESS_SECRET: ${{ secrets.PROD_IMPORTS_PROCESS_SECRET }}
+      TARGET_URL: ${{ secrets.PROD_WEB_APP_URL }}
+
+    steps:
+      - name: Guard missing production scheduler config
+        if: ${{ env.PROCESS_SECRET == '' || env.TARGET_URL == '' }}
+        run: |
+          echo "Skipping production imports processor because PROD_WEB_APP_URL or PROD_IMPORTS_PROCESS_SECRET is not configured."
+
+      - name: Invoke imports processor
+        if: ${{ env.PROCESS_SECRET != '' && env.TARGET_URL != '' }}
+        run: |
+          curl --fail --silent --show-error \
+            --retry 2 \
+            --retry-all-errors \
+            --retry-delay 5 \
+            -X POST "${TARGET_URL%/}/api/internal/imports/process" \
+            -H "Authorization: Bearer ${PROCESS_SECRET}" \
+            -H "Content-Type: application/json"
+
+  production-labor-guide:
+    name: Production labor-guide refresh
+    if: |
+      ${{
+        (
+          github.event_name == 'schedule' &&
+          github.event.schedule == '17,47 * * * *'
+        ) ||
+        (
+          github.event_name == 'workflow_dispatch' &&
+          inputs.run_labor_guide
+        )
+      }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      PROCESS_SECRET: ${{ secrets.PROD_IMPORTS_PROCESS_SECRET }}
+      TARGET_URL: ${{ secrets.PROD_WEB_APP_URL }}
+
+    steps:
+      - name: Guard missing production scheduler config
+        if: ${{ env.PROCESS_SECRET == '' || env.TARGET_URL == '' }}
+        run: |
+          echo "Skipping production labor-guide refresh because PROD_WEB_APP_URL or PROD_IMPORTS_PROCESS_SECRET is not configured."
+
+      - name: Invoke labor-guide refresh
+        if: ${{ env.PROCESS_SECRET != '' && env.TARGET_URL != '' }}
+        run: |
+          curl --fail --silent --show-error \
+            --retry 2 \
+            --retry-all-errors \
+            --retry-delay 5 \
+            -X POST "${TARGET_URL%/}/api/internal/labor-guide/process" \
+            -H "Authorization: Bearer ${PROCESS_SECRET}" \
+            -H "Content-Type: application/json"
