@@ -2,7 +2,9 @@ import {
   type AppSupabaseClient,
   assignJobTechnician as assignVisitTechnician,
   changeJobStatus as changeVisitStatus,
+  enqueueEstimateNotification,
   enqueueDispatchUpdate as enqueueVisitDispatchUpdate,
+  getEstimateByJobId,
   getEstimateDetailById,
   getInvoiceByJobId,
   getJobById,
@@ -57,7 +59,9 @@ import {
   summarizeOpenTechnicianPaymentHandoffsByJobId
 } from "../../../lib/invoices/payment-handoffs";
 import {
+  ensureEstimateAccessLink,
   ensureJobVisitAccessLink as ensureVisitAccessLink,
+  markEstimateAccessLinkSent,
   markJobVisitAccessLinkSent as markVisitAccessLinkSent
 } from "../../../lib/customer-documents/service";
 import {
@@ -2487,6 +2491,53 @@ export default async function EstimatesPage({ searchParams }: EstimatesPageProps
     redirect(returnHref);
   }
 
+  async function sendSelectedEstimateNotificationAction(formData: FormData) {
+    "use server";
+
+    const actionContext = await requireCompanyContext({ requireOfficeAccess: true });
+    const jobId = getFormString(formData, "jobId");
+    const returnHref = normalizeEstimateReturnTo(getFormString(formData, "returnTo"));
+    const latestVisitResult = await getJobById(actionContext.supabase, jobId);
+    const estimateResult = await getEstimateByJobId(actionContext.supabase, jobId);
+
+    if (
+      !jobId ||
+      latestVisitResult.error ||
+      !latestVisitResult.data ||
+      latestVisitResult.data.companyId !== actionContext.companyId ||
+      estimateResult.error ||
+      !estimateResult.data ||
+      estimateResult.data.status !== "sent"
+    ) {
+      redirect(returnHref);
+    }
+
+    const linkSummary = await ensureEstimateAccessLink({
+      actorUserId: actionContext.currentUserId,
+      estimateId: estimateResult.data.id,
+      rotate: true
+    });
+    const result = await enqueueEstimateNotification(actionContext.supabase, {
+      actorUserId: actionContext.currentUserId,
+      actionUrl: linkSummary.publicUrl,
+      estimateId: estimateResult.data.id,
+      resend: true
+    });
+    const communication = await processCommunicationMutationResult(
+      result,
+      "Failed to queue estimate notification."
+    );
+
+    await markEstimateAccessLinkSent(linkSummary.linkId, communication.id, actionContext.currentUserId);
+
+    revalidatePath("/dashboard/estimates");
+    revalidatePath("/dashboard/visits");
+    revalidatePath("/dashboard/dispatch");
+    revalidatePath(`/dashboard/visits/${jobId}`);
+    revalidatePath(`/dashboard/visits/${jobId}/estimate`);
+    redirect(returnHref);
+  }
+
   async function releaseEstimateToDispatchAction(formData: FormData) {
     "use server";
 
@@ -3565,6 +3616,15 @@ export default async function EstimatesPage({ searchParams }: EstimatesPageProps
                       <Link className={buttonClassName({ tone: "secondary" })} href={selectedEstimateWorkspaceHref}>
                         {getEstimateActionLabel(selectedEstimate)}
                       </Link>
+                      {selectedEstimate.status === "sent" ? (
+                        <form action={sendSelectedEstimateNotificationAction}>
+                          <input name="jobId" type="hidden" value={selectedEstimate.jobId} />
+                          <input name="returnTo" type="hidden" value={selectedEstimateReleaseBaseHref} />
+                          <button className={buttonClassName({ tone: "secondary" })} type="submit">
+                            Send estimate
+                          </button>
+                        </form>
+                      ) : null}
                       {selectedWorkflowBlocker?.supplyBlockerCount ? (
                         <Link className={buttonClassName({ tone: "secondary" })} href={`/dashboard/visits/${selectedEstimate.jobId}/inventory`}>
                           Unblock supply

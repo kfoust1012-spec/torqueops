@@ -1283,7 +1283,7 @@ export default async function DashboardPage() {
   const supportBillingSummary = [
     {
       key: "outstanding",
-      label: "Open balance",
+      label: "Unpaid invoices",
       tone: outstandingBalance ? ("warning" as const) : ("neutral" as const),
       value: formatCurrencyFromCents(outstandingBalance)
     },
@@ -1854,7 +1854,7 @@ export default async function DashboardPage() {
                       </span>
                     </Link>
                     <Link className="dashboard-cockpit__owner-signal" href={closeoutThreadHref}>
-                      <span className="dashboard-cockpit__owner-signal-label">Collections and tomorrow</span>
+                      <span className="dashboard-cockpit__owner-signal-label">Unpaid invoices</span>
                       <strong className="dashboard-cockpit__owner-signal-value">
                         {outstandingBalance
                           ? formatCurrencyFromCents(outstandingBalance)
