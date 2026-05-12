@@ -106,6 +106,11 @@ export async function VisitPartsPageImpl({ params, searchParams }: JobPartsPageP
   const visitThreadHref = returnScope || returnTo || returnLabel
     ? buildVisitReturnThreadHref(jobId, returnScope, visitLinkOptions)
     : buildVisitThreadHref(jobId);
+  const estimateBuilderHref = buildVisitEstimateHref(jobId, {
+    ...visitLinkOptions,
+    workspace: true
+  });
+  const estimateReviewHref = buildVisitEstimateHref(jobId, visitLinkOptions);
   const supplyRequestReturnHref = buildVisitPartsHref(jobId, visitLinkOptions);
   const [detail, estimateResult, invoiceResult, inventoryDetail] = await Promise.all([
     getJobProcurementDetail(context.supabase, jobId),
@@ -273,12 +278,15 @@ export async function VisitPartsPageImpl({ params, searchParams }: JobPartsPageP
         }
         actions={
           <>
+            <Link className={buttonClassName({ tone: "primary" })} href={estimateBuilderHref}>
+              Build estimate
+            </Link>
             <form action={startBlankRequestAction}>
-              <Button type="submit">Start blank request</Button>
+              <Button tone="secondary" type="submit">Start part request</Button>
             </form>
             {estimateResult.data ? (
               <form action={startEstimateRequestAction}>
-                <Button tone="secondary" type="submit">
+                <Button tone="tertiary" type="submit">
                   Source estimate parts
                 </Button>
               </form>
@@ -298,6 +306,50 @@ export async function VisitPartsPageImpl({ params, searchParams }: JobPartsPageP
         }
         status={<Badge tone="brand">{detail.requests.length} request(s)</Badge>}
       />
+
+      <Card>
+        <CardHeader>
+          <CardHeaderContent>
+            <CardEyebrow>Estimate workflow</CardEyebrow>
+            <CardTitle>Simple path for building this estimate</CardTitle>
+            <CardDescription>
+              Use the estimate builder for labor, parts, customer wording, totals, and sending. Use this parts page only when you need purchasing or supplier follow-through.
+            </CardDescription>
+          </CardHeaderContent>
+        </CardHeader>
+        <CardContent>
+          <div className="estimate-path-steps">
+            <div>
+              <span>1</span>
+              <strong>Add repairs and labor</strong>
+              <p>Create the customer-facing repair lines first.</p>
+            </div>
+            <div>
+              <span>2</span>
+              <strong>Add or source parts</strong>
+              <p>Use supplier sourcing only after the estimate lines are clear.</p>
+            </div>
+            <div>
+              <span>3</span>
+              <strong>Review and send</strong>
+              <p>Check totals, then make the estimate viewable for the customer.</p>
+            </div>
+          </div>
+          <div className="ui-page-actions" style={{ marginTop: "1rem" }}>
+            <Link className={buttonClassName({ tone: "primary" })} href={estimateBuilderHref}>
+              Build estimate
+            </Link>
+            {estimateResult.data ? (
+              <Link className={buttonClassName({ tone: "secondary" })} href={estimateReviewHref}>
+                Review estimate
+              </Link>
+            ) : null}
+            <Link className={buttonClassName({ tone: "tertiary" })} href={visitThreadHref}>
+              Back to visit
+            </Link>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   getDispatchLocalDate,
@@ -1569,15 +1569,18 @@ export function DispatchCommandCenter({
     ...activeCalendar,
     resources: orderedBoardResources
   };
-  const visibleVisitIds = new Set(
-    [
+  const visibleVisitIds = useMemo(
+    () =>
+      new Set([
       ...activeCalendar.jobs.map((job) => job.id),
       ...activeCalendar.unassignedScheduledJobs.map((job) => job.id),
       ...activeCalendar.backlogJobs.map((job) => job.id)
-    ]
+      ]),
+    [activeCalendar.backlogJobs, activeCalendar.jobs, activeCalendar.unassignedScheduledJobs]
   );
-  const visibleTechnicianIds = dispatchSurfaceCalendar.resources.map(
-    (resource) => resource.technicianUserId
+  const visibleTechnicianIds = useMemo(
+    () => dispatchSurfaceCalendar.resources.map((resource) => resource.technicianUserId),
+    [dispatchSurfaceCalendar.resources]
   );
 
   useEffect(() => {
