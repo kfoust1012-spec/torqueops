@@ -76,6 +76,49 @@ const estimateStepDescriptions = [
 type ScheduleIntent = "later" | "specific_time" | "arrival_window";
 type AssignmentIntent = "later" | "assign_now";
 
+function getServiceSiteSummary(site: IntakeServiceSite) {
+  return [
+    [site.line1, site.line2].filter(Boolean).join(", "),
+    `${site.city}, ${site.state} ${site.postalCode}`
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function getServiceSiteSearchText(site: IntakeServiceSite) {
+  return [
+    site.siteName,
+    site.label,
+    site.line1,
+    site.line2,
+    site.city,
+    site.state,
+    site.postalCode,
+    site.country,
+    site.customerName
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
+
+function filterServiceSitesByQuery(sites: IntakeServiceSite[], query: string) {
+  const tokens = query
+    .trim()
+    .toLowerCase()
+    .split(/[\s,]+/)
+    .filter(Boolean);
+
+  if (!tokens.length) {
+    return sites;
+  }
+
+  return sites.filter((site) => {
+    const searchText = getServiceSiteSearchText(site);
+    return tokens.every((token) => searchText.includes(token));
+  });
+}
+
 export function NewJobWorkflow({
   action,
   cancelHref,
@@ -121,6 +164,7 @@ export function NewJobWorkflow({
   const [assignedTechnicianUserId, setAssignedTechnicianUserId] = useState("");
   const [priority, setPriority] = useState("normal");
   const [source, setSource] = useState("office");
+  const [serviceSiteQuery, setServiceSiteQuery] = useState("");
   const progressRef = useRef<HTMLDivElement | null>(null);
   const stepRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
@@ -130,6 +174,7 @@ export function NewJobWorkflow({
   const currentServiceSites = serviceSites.filter(
     (site) => site.isActive && site.customerId === selectedCustomerId
   );
+  const searchedServiceSites = filterServiceSitesByQuery(currentServiceSites, serviceSiteQuery);
   const selectedCustomer =
     customers.find((customer) => customer.id === selectedCustomerId) ?? defaultCustomer;
   const selectedVehicle =
@@ -205,6 +250,10 @@ export function NewJobWorkflow({
       setSelectedServiceSiteId(fallbackSite?.id ?? "");
     }
   }, [currentServiceSites, selectedServiceSiteId]);
+
+  useEffect(() => {
+    setServiceSiteQuery("");
+  }, [selectedCustomerId]);
 
   useEffect(() => {
     const container = progressRef.current;
@@ -442,32 +491,51 @@ export function NewJobWorkflow({
           {activeStep === 2 ? (
             <div className="job-intake-flow__stage">
               {currentServiceSites.length ? (
-                <div className="job-intake-flow__choice-grid">
-                  {currentServiceSites.map((site) => (
-                    <label
-                      className={cx(
-                        "job-intake-flow__choice",
-                        selectedServiceSite?.id === site.id && "job-intake-flow__choice--active"
-                      )}
-                      key={site.id}
-                    >
-                      <input
-                        checked={selectedServiceSite?.id === site.id}
-                        onChange={() => setSelectedServiceSiteId(site.id)}
-                        type="radio"
-                      />
-                      <strong>{site.siteName || site.line1}</strong>
-                      <span>
-                        {[
-                          [site.line1, site.line2].filter(Boolean).join(", "),
-                          `${site.city}, ${site.state} ${site.postalCode}`
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+                <>
+                  <label className="job-intake-flow__field job-intake-flow__search">
+                    <span>Search saved service locations</span>
+                    <Input
+                      autoComplete="off"
+                      onChange={(event) => setServiceSiteQuery(event.currentTarget.value)}
+                      placeholder="Start typing street, city, ZIP, or site name"
+                      type="search"
+                      value={serviceSiteQuery}
+                    />
+                  </label>
+
+                  {searchedServiceSites.length ? (
+                    <div className="job-intake-flow__choice-grid">
+                      {searchedServiceSites.map((site) => (
+                        <label
+                          className={cx(
+                            "job-intake-flow__choice",
+                            selectedServiceSite?.id === site.id && "job-intake-flow__choice--active"
+                          )}
+                          key={site.id}
+                        >
+                          <input
+                            checked={selectedServiceSite?.id === site.id}
+                            onChange={() => setSelectedServiceSiteId(site.id)}
+                            type="radio"
+                          />
+                          <strong>{site.siteName || site.line1}</strong>
+                          <span>{getServiceSiteSummary(site)}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="job-intake-flow__empty">
+                      <p>No saved service locations match that search.</p>
+                      <button
+                        className={buttonClassName({ size: "sm", tone: "ghost" })}
+                        onClick={() => setServiceSiteQuery("")}
+                        type="button"
+                      >
+                        Show all saved locations
+                      </button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="job-intake-flow__empty">
                   <p>No active service sites are linked to this customer.</p>
