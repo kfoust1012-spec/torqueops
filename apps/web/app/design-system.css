@@ -40334,6 +40334,46 @@ body,
   border-radius: 18px;
 }
 
+.dispatch-page .dispatch-quick-edit__section--primary {
+  border-color: rgba(26, 108, 107, 0.18);
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.dispatch-page .dispatch-quick-edit__details {
+  display: grid;
+  gap: 10px;
+}
+
+.dispatch-page .dispatch-quick-edit__details > summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 12px;
+  border: 1px solid rgba(123, 139, 165, 0.22);
+  border-radius: 18px;
+  color: rgb(35, 47, 66);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.dispatch-page .dispatch-quick-edit__details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.dispatch-page .dispatch-quick-edit__details > summary::after {
+  content: "+";
+  float: right;
+  color: rgba(35, 47, 66, 0.62);
+}
+
+.dispatch-page .dispatch-quick-edit__details[open] > summary::after {
+  content: "-";
+}
+
+.dispatch-page .dispatch-quick-edit__footer--inline {
+  border-top: 0;
+  padding-top: 0;
+}
+
 .dispatch-page .dispatch-quick-edit__section-header p,
 .dispatch-page .dispatch-quick-edit__footer-copy {
   font-size: 12px;

@@ -7,7 +7,9 @@ import type { DispatchOnBoardPromiseSummary } from "../../../../lib/dispatch/fol
 import { DispatchVisitEvent } from "./dispatch-visit-event";
 
 vi.mock("@mobile-mechanic/core", () => ({
-  formatDispatchDateTime: (value: string | null | undefined) => value ?? "Not scheduled"
+  formatDispatchDateTime: (value: string | null | undefined) => value ?? "Not scheduled",
+  isTechnicianTravelJobStatus: (status: string | null | undefined) =>
+    status === "dispatched" || status === "en_route"
 }));
 
 function createEvent(overrides: Partial<DispatchCalendarJobEvent> = {}): DispatchCalendarJobEvent {

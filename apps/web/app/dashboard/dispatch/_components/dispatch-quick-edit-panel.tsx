@@ -1352,14 +1352,27 @@ export function DispatchQuickEditPanel({
     }
   }
 
+  function saveBoardChanges() {
+    void onSave({
+      arrivalWindowEndAt: arrivalWindowEndAt || null,
+      arrivalWindowStartAt: arrivalWindowStartAt || null,
+      assignedTechnicianUserId: assignedTechnicianUserId || null,
+      jobId,
+      priority,
+      scheduledEndAt: scheduledEndAt || null,
+      scheduledStartAt: scheduledStartAt || null,
+      status
+    });
+  }
+
   return (
     <aside className="dispatch-quick-edit">
       <div className="dispatch-quick-edit__header">
         <div className="dispatch-quick-edit__header-copy">
-          <p className="dispatch-quick-edit__eyebrow">Visit intervention</p>
+          <p className="dispatch-quick-edit__eyebrow">Estimate and schedule</p>
           <h3 className="dispatch-quick-edit__title">{visit.title}</h3>
           <p className="dispatch-quick-edit__subline">
-            {visit.customerDisplayName} · {visit.vehicleDisplayName} · recover timing, trust, and release without leaving dispatch.
+            {visit.customerDisplayName} · {visit.vehicleDisplayName}
           </p>
         </div>
         <Button onClick={onClose} size="sm" tone="tertiary" type="button">
@@ -1388,21 +1401,21 @@ export function DispatchQuickEditPanel({
           ) : null}
         </div>
         <span className="dispatch-quick-edit__thread-support">
-          Carry one service thread, one site thread, and one continuity signal while recovery stays inside Dispatch.
+          Keep customer, vehicle, estimate, and schedule work together.
         </span>
       </div>
 
       <div className="dispatch-quick-edit__hero">
         <div className="dispatch-quick-edit__hero-strip">
           <div className="dispatch-quick-edit__hero-callout dispatch-quick-edit__hero-callout--accent">
-            <span className="dispatch-quick-edit__hero-callout-label">Next intervention</span>
+            <span className="dispatch-quick-edit__hero-callout-label">Next step</span>
             <strong className="dispatch-quick-edit__hero-callout-value">{nextMove}</strong>
           </div>
 
           <div
             className={`dispatch-quick-edit__hero-callout dispatch-quick-edit__hero-callout--${boardStateTone}`}
           >
-            <span className="dispatch-quick-edit__hero-callout-label">Lane pressure</span>
+            <span className="dispatch-quick-edit__hero-callout-label">Schedule status</span>
             <strong className="dispatch-quick-edit__hero-callout-value">{boardStateLabel}</strong>
           </div>
         </div>
@@ -1436,16 +1449,6 @@ export function DispatchQuickEditPanel({
         </Callout>
       ) : null}
 
-      {draftOperationalSignal.tone === "danger" ? (
-        <Callout tone="danger" title="Intervention prompt">
-          The promised timing has already slipped. Send a customer update now or reset the timing before this stop falls further behind.
-        </Callout>
-      ) : draftOperationalSignal.tone === "warning" ? (
-        <Callout tone="warning" title="Watch timing">
-          This stop is close enough to its promise window that the next move should be explicit: confirm lane timing, send an update, or tighten the schedule.
-        </Callout>
-      ) : null}
-
       {communicationFeedback ? (
         <Callout
           tone={pendingCommunication ? "warning" : communicationFeedback.includes("could not") ? "danger" : "success"}
@@ -1456,6 +1459,202 @@ export function DispatchQuickEditPanel({
       ) : null}
 
       <div className="dispatch-quick-edit__body">
+        <section className="dispatch-quick-edit__section dispatch-quick-edit__section--primary">
+          <div className="dispatch-quick-edit__section-header">
+            <div className="dispatch-quick-edit__section-copy">
+              <h4>Visit basics</h4>
+              <p>Customer, vehicle, and concern.</p>
+            </div>
+          </div>
+          <div className="dispatch-quick-edit__hero-grid">
+            <div className="dispatch-quick-edit__hero-item">
+              <span className="dispatch-quick-edit__hero-label">Customer</span>
+              <strong className="dispatch-quick-edit__hero-value">{visit.customerDisplayName}</strong>
+              <span>Customer record for this estimate.</span>
+            </div>
+            <div className="dispatch-quick-edit__hero-item">
+              <span className="dispatch-quick-edit__hero-label">Vehicle</span>
+              <strong className="dispatch-quick-edit__hero-value">{visit.vehicleDisplayName}</strong>
+              <span>Vehicle tied to this work.</span>
+            </div>
+            <div className="dispatch-quick-edit__hero-item">
+              <span className="dispatch-quick-edit__hero-label">Customer concern</span>
+              <strong className="dispatch-quick-edit__hero-value">{visit.title}</strong>
+              <span>Open the visit thread for full concern notes.</span>
+            </div>
+            <div className="dispatch-quick-edit__hero-item">
+              <span className="dispatch-quick-edit__hero-label">Status</span>
+              <strong className="dispatch-quick-edit__hero-value">{formatDesignLabel(status)}</strong>
+              <span>{getVisitWorkflowLabel(workflowState)}</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="dispatch-quick-edit__section dispatch-quick-edit__section--primary">
+          <div className="dispatch-quick-edit__section-header">
+            <div className="dispatch-quick-edit__section-copy">
+              <h4>Estimate</h4>
+              <p>Build, review, and send the estimate.</p>
+            </div>
+          </div>
+          <div className="dispatch-quick-edit__hero-grid">
+            <div className="dispatch-quick-edit__hero-item">
+              <span className="dispatch-quick-edit__hero-label">{estimateSummary.title}</span>
+              <strong className="dispatch-quick-edit__hero-value">
+                {snapshotLoading ? "Loading..." : estimateSummary.value}
+              </strong>
+              <span>{estimateSummary.copy}</span>
+            </div>
+            <div className="dispatch-quick-edit__hero-item">
+              <span className="dispatch-quick-edit__hero-label">Last customer message</span>
+              <strong className="dispatch-quick-edit__hero-value">
+                {snapshotLoading ? "Loading..." : communicationSummary.value}
+              </strong>
+              <span>{communicationSummary.copy}</span>
+            </div>
+          </div>
+          <div className="ui-button-grid">
+            <Link
+              className={buttonClassName({ size: "sm", tone: "secondary" })}
+              href={buildVisitEstimateHref(jobId, {
+                returnLabel: returnToLabel,
+                returnTo: returnToHref
+              })}
+            >
+              {snapshot?.estimate?.status === "draft" ? "Open builder" : "Open estimate"}
+            </Link>
+            {canSendEstimateNotification ? (
+              <>
+                <Button
+                  disabled={Boolean(pendingCommunication)}
+                  loading={pendingCommunication === "estimate_notification"}
+                  onClick={() =>
+                    void sendCommunication({
+                      action: "estimate_notification",
+                      successMessage: "Estimate notification queued."
+                    })
+                  }
+                  size="sm"
+                  tone="secondary"
+                  type="button"
+                >
+                  Send estimate
+                </Button>
+                {snapshot?.estimateLink ? (
+                  <a
+                    className={buttonClassName({ size: "sm", tone: "ghost" })}
+                    href={snapshot.estimateLink.publicUrl}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    Open estimate link
+                  </a>
+                ) : null}
+              </>
+            ) : null}
+          </div>
+        </section>
+
+        <section className="dispatch-quick-edit__section dispatch-quick-edit__section--primary">
+          <div className="dispatch-quick-edit__section-header">
+            <div className="dispatch-quick-edit__section-copy">
+              <h4>Schedule</h4>
+              <p>Assign a technician and set the appointment time.</p>
+            </div>
+          </div>
+          <div className="dispatch-quick-edit__field-row dispatch-quick-edit__field-row--triple">
+            <label className="dispatch-quick-edit__field">
+              <span>Assign technician</span>
+              <Select
+                onChange={(event) => setAssignedTechnicianUserId(event.currentTarget.value)}
+                value={assignedTechnicianUserId}
+              >
+                <option value="">Unassigned</option>
+                {technicians.map((technician) => (
+                  <option key={technician.userId} value={technician.userId}>
+                    {technician.displayName}
+                  </option>
+                ))}
+              </Select>
+            </label>
+
+            <label className="dispatch-quick-edit__field">
+              <span>Status</span>
+              <Select onChange={(event) => setStatus(event.currentTarget.value as JobStatus)} value={status}>
+                {dispatchStatuses.map((value) => (
+                  <option key={value} value={value}>
+                    {formatDesignLabel(value)}
+                  </option>
+                ))}
+              </Select>
+            </label>
+
+            <label className="dispatch-quick-edit__field">
+              <span>Priority</span>
+              <Select onChange={(event) => setPriority(event.currentTarget.value as JobPriority)} value={priority}>
+                {dispatchPriorities.map((value) => (
+                  <option key={value} value={value}>
+                    {formatDesignLabel(value)}
+                  </option>
+                ))}
+              </Select>
+            </label>
+          </div>
+          <div className="dispatch-quick-edit__field-row dispatch-quick-edit__field-row--single">
+            <label className="dispatch-quick-edit__field">
+              <span>Scheduled start</span>
+              <Input
+                onChange={(event) => setScheduledStartAt(event.currentTarget.value)}
+                type="datetime-local"
+                value={scheduledStartAt}
+              />
+            </label>
+            <label className="dispatch-quick-edit__field">
+              <span>Scheduled end</span>
+              <Input
+                onChange={(event) => setScheduledEndAt(event.currentTarget.value)}
+                type="datetime-local"
+                value={scheduledEndAt}
+              />
+            </label>
+          </div>
+
+          <div className="dispatch-quick-edit__field-row dispatch-quick-edit__field-row--single">
+            <label className="dispatch-quick-edit__field">
+              <span>Arrival window start</span>
+              <Input
+                onChange={(event) => setArrivalWindowStartAt(event.currentTarget.value)}
+                type="datetime-local"
+                value={arrivalWindowStartAt}
+              />
+            </label>
+            <label className="dispatch-quick-edit__field">
+              <span>Arrival window end</span>
+              <Input
+                onChange={(event) => setArrivalWindowEndAt(event.currentTarget.value)}
+                type="datetime-local"
+                value={arrivalWindowEndAt}
+              />
+            </label>
+          </div>
+          <div className="dispatch-quick-edit__footer dispatch-quick-edit__footer--inline">
+            <p className="dispatch-quick-edit__footer-copy">
+              Saves technician, schedule, status, and priority.
+            </p>
+            <Button
+              disabled={Boolean(validationError)}
+              loading={pending}
+              onClick={saveBoardChanges}
+              type="button"
+            >
+              Save schedule
+            </Button>
+          </div>
+        </section>
+
+        <details className="dispatch-quick-edit__details">
+          <summary>Advanced dispatch details</summary>
+
         {snapshot ? (
           <section className="dispatch-quick-edit__section">
             <div className="dispatch-quick-edit__section-header">
@@ -1795,40 +1994,11 @@ export function DispatchQuickEditPanel({
         <section className="dispatch-quick-edit__section dispatch-quick-edit__section--secondary">
           <div className="dispatch-quick-edit__section-header">
             <div className="dispatch-quick-edit__section-copy">
-              <h4>Next move</h4>
-              <p>Push the next estimate or invoice action without leaving the board.</p>
+              <h4>Billing and messages</h4>
+              <p>Invoice and payment actions stay here when they are needed.</p>
             </div>
           </div>
           <div className="ui-button-grid">
-            {canSendEstimateNotification ? (
-              <>
-                {snapshot?.estimateLink ? (
-                  <a
-                    className={buttonClassName({ size: "sm", tone: "ghost" })}
-                    href={snapshot.estimateLink.publicUrl}
-                    rel="noreferrer"
-                    target="_blank"
-                  >
-                    Open estimate link
-                  </a>
-                ) : null}
-                <Button
-                  disabled={Boolean(pendingCommunication)}
-                  loading={pendingCommunication === "estimate_notification"}
-                  onClick={() =>
-                    void sendCommunication({
-                      action: "estimate_notification",
-                      successMessage: "Estimate notification queued."
-                    })
-                  }
-                  size="sm"
-                  tone="secondary"
-                  type="button"
-                >
-                  Send estimate notification
-                </Button>
-              </>
-            ) : null}
             {canSendInvoiceNotification ? (
               <>
                 {snapshot?.invoiceLink ? (
@@ -1876,9 +2046,9 @@ export function DispatchQuickEditPanel({
               </Button>
             ) : null}
           </div>
-          {!canSendEstimateNotification && !canSendInvoiceNotification && !canSendReminder ? (
+          {!canSendInvoiceNotification && !canSendReminder ? (
             <p className="dispatch-quick-edit__section-copy">
-              Estimate notifications appear once the estimate has been sent. Invoice nudges appear after billing has been issued.
+              Invoice nudges appear after billing has been issued.
             </p>
           ) : null}
         </section>
@@ -2244,47 +2414,9 @@ export function DispatchQuickEditPanel({
         <section className="dispatch-quick-edit__section">
           <div className="dispatch-quick-edit__section-header">
             <div className="dispatch-quick-edit__section-copy">
-              <h4>Lane dispatch</h4>
-              <p>Assign lane owner, workflow state, and urgency.</p>
+              <h4>Suggested lanes</h4>
+              <p>Optional lane-fit suggestions for dispatch review.</p>
             </div>
-          </div>
-          <div className="dispatch-quick-edit__field-row dispatch-quick-edit__field-row--triple">
-            <label className="dispatch-quick-edit__field">
-              <span>Lane owner</span>
-              <Select
-                onChange={(event) => setAssignedTechnicianUserId(event.currentTarget.value)}
-                value={assignedTechnicianUserId}
-              >
-                <option value="">Unassigned</option>
-                {technicians.map((technician) => (
-                  <option key={technician.userId} value={technician.userId}>
-                    {technician.displayName}
-                  </option>
-                ))}
-              </Select>
-            </label>
-
-            <label className="dispatch-quick-edit__field">
-              <span>Status</span>
-              <Select onChange={(event) => setStatus(event.currentTarget.value as JobStatus)} value={status}>
-                {dispatchStatuses.map((value) => (
-                  <option key={value} value={value}>
-                    {formatDesignLabel(value)}
-                  </option>
-                ))}
-              </Select>
-            </label>
-
-            <label className="dispatch-quick-edit__field">
-              <span>Priority</span>
-              <Select onChange={(event) => setPriority(event.currentTarget.value as JobPriority)} value={priority}>
-                {dispatchPriorities.map((value) => (
-                  <option key={value} value={value}>
-                    {formatDesignLabel(value)}
-                  </option>
-                ))}
-              </Select>
-            </label>
           </div>
           {laneRecommendations.length ? (
             <div className="dispatch-quick-edit__hero-grid">
@@ -2345,79 +2477,13 @@ export function DispatchQuickEditPanel({
                 </div>
               ))}
             </div>
-          ) : null}
+          ) : (
+            <p className="dispatch-quick-edit__section-copy">
+              No lane suggestions are available for this visit right now.
+            </p>
+          )}
         </section>
-
-        <section className="dispatch-quick-edit__section dispatch-quick-edit__section--secondary">
-          <div className="dispatch-quick-edit__section-header">
-            <div className="dispatch-quick-edit__section-copy">
-              <h4>Slot timing</h4>
-              <p>Set the board slot and promise window.</p>
-            </div>
-          </div>
-          <div className="dispatch-quick-edit__field-row dispatch-quick-edit__field-row--single">
-            <label className="dispatch-quick-edit__field">
-              <span>Scheduled start</span>
-              <Input
-                onChange={(event) => setScheduledStartAt(event.currentTarget.value)}
-                type="datetime-local"
-                value={scheduledStartAt}
-              />
-            </label>
-            <label className="dispatch-quick-edit__field">
-              <span>Scheduled end</span>
-              <Input
-                onChange={(event) => setScheduledEndAt(event.currentTarget.value)}
-                type="datetime-local"
-                value={scheduledEndAt}
-              />
-            </label>
-          </div>
-
-          <div className="dispatch-quick-edit__field-row dispatch-quick-edit__field-row--single">
-            <label className="dispatch-quick-edit__field">
-              <span>Arrival window start</span>
-              <Input
-                onChange={(event) => setArrivalWindowStartAt(event.currentTarget.value)}
-                type="datetime-local"
-                value={arrivalWindowStartAt}
-              />
-            </label>
-            <label className="dispatch-quick-edit__field">
-              <span>Arrival window end</span>
-              <Input
-                onChange={(event) => setArrivalWindowEndAt(event.currentTarget.value)}
-                type="datetime-local"
-                value={arrivalWindowEndAt}
-              />
-            </label>
-          </div>
-        </section>
-      </div>
-
-      <div className="dispatch-quick-edit__footer">
-        <p className="dispatch-quick-edit__footer-copy">
-          Saves lane load and recalculates conflicts immediately.
-        </p>
-        <Button
-          disabled={Boolean(validationError)}
-          loading={pending}
-          onClick={() =>
-            void onSave({
-              arrivalWindowEndAt: arrivalWindowEndAt || null,
-              arrivalWindowStartAt: arrivalWindowStartAt || null,
-              assignedTechnicianUserId: assignedTechnicianUserId || null,
-              jobId,
-              priority,
-              scheduledEndAt: scheduledEndAt || null,
-              scheduledStartAt: scheduledStartAt || null,
-              status
-            })
-          }
-          type="button"
-        >
-          Save to board
-        </Button>
+        </details>
       </div>
     </aside>
   );
