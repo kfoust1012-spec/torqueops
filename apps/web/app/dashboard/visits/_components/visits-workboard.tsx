@@ -1279,7 +1279,8 @@ export function VisitsWorkboard({
     const isBulkSelected = selectedVisitIds.includes(visit.id);
     const canMessage = Boolean(visit.customerPhone);
     const canDrag = canEditRecords && !isPending && workflowState !== "completed";
-    const canMoveManually = canEditRecords && !isPending && workflowState !== "completed";
+    const canShowManualMove = workflowState !== "completed";
+    const canSubmitManualMove = canEditRecords && !isPending && !isRefreshing;
     const showUtilityActions =
       isSelected ||
       (!focusMode &&
@@ -1475,6 +1476,51 @@ export function VisitsWorkboard({
           </div>
         </div>
 
+        {canShowManualMove ? (
+          <form
+            className="job-flow-card__manual-move"
+            onSubmit={(event) => {
+              event.preventDefault();
+
+              if (!canEditRecords) {
+                setFeedback({
+                  message: "You do not have permission to move repair orders.",
+                  tone: "danger"
+                });
+                return;
+              }
+
+              const formData = new FormData(event.currentTarget);
+              const targetState = formData.get("targetState");
+
+              if (typeof targetState !== "string") {
+                return;
+              }
+
+              void moveVisit(visit.id, targetState as VisitWorkflowState);
+            }}
+          >
+            <label>
+              <span>Move repair order</span>
+              <Select
+                aria-label={`Move ${visit.title} to workflow stage`}
+                defaultValue={workflowState}
+                disabled={!canEditRecords || isPending || isRefreshing}
+                name="targetState"
+              >
+                {visitWorkflowStates.map((state) => (
+                  <option key={state} value={state}>
+                    {getVisitWorkflowLabel(state)}
+                  </option>
+                ))}
+              </Select>
+            </label>
+            <Button disabled={!canSubmitManualMove} size="sm" tone="secondary" type="submit">
+              Move
+            </Button>
+          </form>
+        ) : null}
+
         <div className="job-flow-card__footer">
           {showCardSecondaryNote ? <p className="job-flow-card__note">{cardSecondaryNote}</p> : null}
           <div className="job-flow-card__actions">
@@ -1500,41 +1546,6 @@ export function VisitsWorkboard({
               </Link>
             ) : null}
           </div>
-          {canMoveManually ? (
-            <form
-              className="job-flow-card__manual-move"
-              onSubmit={(event) => {
-                event.preventDefault();
-                const formData = new FormData(event.currentTarget);
-                const targetState = formData.get("targetState");
-
-                if (typeof targetState !== "string") {
-                  return;
-                }
-
-                void moveVisit(visit.id, targetState as VisitWorkflowState);
-              }}
-            >
-              <label>
-                <span>Move to</span>
-                <Select
-                  aria-label={`Move ${visit.title} to workflow stage`}
-                  defaultValue={workflowState}
-                  disabled={isPending || isRefreshing}
-                  name="targetState"
-                >
-                  {visitWorkflowStates.map((state) => (
-                    <option key={state} value={state}>
-                      {getVisitWorkflowLabel(state)}
-                    </option>
-                  ))}
-                </Select>
-              </label>
-              <Button disabled={isPending || isRefreshing} size="sm" tone="ghost" type="submit">
-                Move
-              </Button>
-            </form>
-          ) : null}
         </div>
 
         {activeNoteVisitId === visit.id ? (

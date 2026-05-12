@@ -31933,9 +31933,11 @@ body,
   gap: 8px;
   align-items: end;
   width: 100%;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  margin-top: 10px;
+  padding: 8px;
+  border: 1px solid rgba(37, 99, 235, 0.14);
+  border-radius: 10px;
+  background: rgba(248, 250, 252, 0.86);
 }
 
 .job-flow-card__manual-move label {
@@ -31955,6 +31957,11 @@ body,
 .job-flow-card__manual-move .ui-select {
   min-height: 34px;
   font-size: 12px;
+}
+
+.job-flow-card--tight .job-flow-card__manual-move,
+.job-flow-board-shell--high-volume .job-flow-card__manual-move {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .job-flow-list__row {
