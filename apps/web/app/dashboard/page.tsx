@@ -1,4 +1,5 @@
 import {
+  changeJobStatus,
   enqueueEstimateNotification,
   enqueuePaymentReminder,
   getEstimateByJobId,
@@ -6,7 +7,8 @@ import {
   getJobById,
   listEstimatesByCompany,
   listInvoicesByCompany,
-  listJobsByCompany
+  listJobsByCompany,
+  updateJob
 } from "@mobile-mechanic/api-client";
 import {
   formatCurrencyFromCents,
@@ -45,6 +47,13 @@ import {
   summarizeOpenTechnicianPaymentHandoffsByJobId
 } from "../../lib/invoices/payment-handoffs";
 import { buildWorkspaceBlockerSummary } from "../../lib/jobs/workspace-blockers";
+import {
+  assessVisitWorkflowMove,
+  getVisitWorkflowLabel,
+  getVisitWorkflowState,
+  isVisitWorkflowState,
+  visitWorkflowStates
+} from "../../lib/jobs/workflow";
 import { getOfficeHomeWorkspace } from "../../lib/office-workspace-focus";
 import { toServerError } from "../../lib/server-error";
 import {
@@ -372,6 +381,10 @@ function getDashboardQueueContextLabel(job: JobListItem, carryoverJobIds: Set<st
   return `Carryover · ${baseLabel}`;
 }
 
+function canDashboardManuallyMoveJob(job: JobListItem) {
+  return job.isActive && job.status !== "completed" && job.status !== "canceled";
+}
+
 function getFormString(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value : "";
@@ -420,6 +433,82 @@ async function sendDashboardEstimateReminderAction(formData: FormData) {
   revalidatePath(`/dashboard/visits/${jobId}`);
   revalidatePath(`/dashboard/visits/${jobId}/estimate`);
   redirect(returnHref);
+}
+
+async function moveDashboardWorkflowJobAction(formData: FormData) {
+  "use server";
+
+  const actionContext = await requireCompanyContext({ requireOfficeAccess: true });
+  const jobId = getFormString(formData, "jobId");
+  const targetState = getFormString(formData, "targetState");
+
+  if (!jobId || !isVisitWorkflowState(targetState)) {
+    redirect("/dashboard");
+  }
+
+  const latestJobResult = await getJobById(actionContext.supabase, jobId);
+
+  if (
+    latestJobResult.error ||
+    !latestJobResult.data ||
+    latestJobResult.data.companyId !== actionContext.companyId ||
+    !latestJobResult.data.isActive ||
+    latestJobResult.data.status === "canceled"
+  ) {
+    redirect("/dashboard");
+  }
+
+  const assessment = assessVisitWorkflowMove(latestJobResult.data, targetState);
+
+  if (!assessment.allowed) {
+    redirect("/dashboard");
+  }
+
+  if (assessment.plan.toStatus) {
+    const statusResult = await changeJobStatus(actionContext.supabase, latestJobResult.data.id, {
+      reason: `Moved to ${targetState} from the dashboard workflow`,
+      toStatus: assessment.plan.toStatus
+    });
+
+    if (statusResult.error) {
+      redirect("/dashboard");
+    }
+  }
+
+  if (
+    assessment.plan.clearSchedule ||
+    Object.prototype.hasOwnProperty.call(assessment.plan, "assignedTechnicianUserId")
+  ) {
+    const updateResult = await updateJob(actionContext.supabase, latestJobResult.data.id, {
+      assignedTechnicianUserId:
+        assessment.plan.assignedTechnicianUserId !== undefined
+          ? assessment.plan.assignedTechnicianUserId
+          : latestJobResult.data.assignedTechnicianUserId,
+      arrivalWindowEndAt: assessment.plan.clearSchedule ? null : latestJobResult.data.arrivalWindowEndAt,
+      arrivalWindowStartAt: assessment.plan.clearSchedule ? null : latestJobResult.data.arrivalWindowStartAt,
+      customerConcern: latestJobResult.data.customerConcern,
+      customerId: latestJobResult.data.customerId,
+      description: latestJobResult.data.description,
+      internalSummary: latestJobResult.data.internalSummary,
+      isActive: latestJobResult.data.isActive,
+      priority: latestJobResult.data.priority,
+      scheduledEndAt: assessment.plan.clearSchedule ? null : latestJobResult.data.scheduledEndAt,
+      scheduledStartAt: assessment.plan.clearSchedule ? null : latestJobResult.data.scheduledStartAt,
+      source: latestJobResult.data.source,
+      title: latestJobResult.data.title,
+      vehicleId: latestJobResult.data.vehicleId
+    });
+
+    if (updateResult.error) {
+      redirect("/dashboard");
+    }
+  }
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/visits");
+  revalidatePath("/dashboard/dispatch");
+  revalidatePath(`/dashboard/visits/${jobId}`);
+  redirect("/dashboard");
 }
 
 function getDistinctDashboardJobs(jobs: JobListItem[]) {
@@ -1680,18 +1769,55 @@ export default async function DashboardPage() {
                             {column.jobs.length ? (
                               <>
                                 <div className="dashboard-cockpit__lane-list">
-                                  {visibleLaneJobs.map((job) => (
-                                    <Link
-                                      className="dashboard-cockpit__lane-item"
-                                      href={getDashboardQueueNextAction(job, today, todayBriefVisitLinkOptions).visitHref}
-                                      key={job.id}
-                                    >
-                                      <strong>{job.title}</strong>
-                                      <span>
-                                        {job.customerDisplayName} · {getDashboardQueueContextLabel(job, carryoverJobIds)}
-                                      </span>
-                                    </Link>
-                                  ))}
+                                  {visibleLaneJobs.map((job) => {
+                                    const currentWorkflowState = getVisitWorkflowState(job);
+                                    const canMoveJob = canDashboardManuallyMoveJob(job);
+
+                                    return (
+                                      <article className="dashboard-cockpit__lane-item" key={job.id}>
+                                        <Link
+                                          className="dashboard-cockpit__lane-link"
+                                          href={getDashboardQueueNextAction(job, today, todayBriefVisitLinkOptions).visitHref}
+                                        >
+                                          <strong>{job.title}</strong>
+                                          <span>
+                                            {job.customerDisplayName} · {getDashboardQueueContextLabel(job, carryoverJobIds)}
+                                          </span>
+                                        </Link>
+                                        {canMoveJob ? (
+                                          <form
+                                            action={moveDashboardWorkflowJobAction}
+                                            className="dashboard-cockpit__lane-move"
+                                          >
+                                            <input name="jobId" type="hidden" value={job.id} />
+                                            <label>
+                                              <span>Move to</span>
+                                              <select
+                                                aria-label={`Move ${job.title} to workflow stage`}
+                                                defaultValue={currentWorkflowState}
+                                                name="targetState"
+                                              >
+                                                {visitWorkflowStates.map((state) => (
+                                                  <option
+                                                    key={state}
+                                                    value={state}
+                                                  >
+                                                    {getVisitWorkflowLabel(state)}
+                                                  </option>
+                                                ))}
+                                              </select>
+                                            </label>
+                                            <button
+                                              className={buttonClassName({ size: "sm", tone: "ghost" })}
+                                              type="submit"
+                                            >
+                                              Move
+                                            </button>
+                                          </form>
+                                        ) : null}
+                                      </article>
+                                    );
+                                  })}
                                 </div>
                                 {hiddenLaneJobs ? (
                                   <p className="dashboard-cockpit__lane-overflow">
