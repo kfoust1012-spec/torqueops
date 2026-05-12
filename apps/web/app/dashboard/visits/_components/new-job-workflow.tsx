@@ -35,9 +35,11 @@ type IntakeServiceSite = CustomerAddress & {
 
 type NewJobWorkflowProps = {
   action: (formData: FormData) => Promise<void>;
+  addressReturnHref: string;
   cancelHref: string;
   customers: CustomerListItem[];
   defaultCustomerId: string;
+  defaultServiceSiteId: string;
   defaultVehicleId: string;
   entryMode: "estimate" | "job";
   followUpContext?: {
@@ -121,9 +123,11 @@ function filterServiceSitesByQuery(sites: IntakeServiceSite[], query: string) {
 
 export function NewJobWorkflow({
   action,
+  addressReturnHref,
   cancelHref,
   customers,
   defaultCustomerId,
+  defaultServiceSiteId,
   defaultVehicleId,
   entryMode,
   followUpContext,
@@ -144,7 +148,10 @@ export function NewJobWorkflow({
     (site) => site.isActive && site.customerId === (defaultCustomer?.id ?? "")
   );
   const defaultServiceSite =
-    filteredServiceSites.find((site) => site.isPrimary) ?? filteredServiceSites[0] ?? null;
+    filteredServiceSites.find((site) => site.id === defaultServiceSiteId) ??
+    filteredServiceSites.find((site) => site.isPrimary) ??
+    filteredServiceSites[0] ??
+    null;
   const [activeStep, setActiveStep] = useState(() =>
     Math.max(0, Math.min(preferredStartStep, steps.length - 1))
   );
@@ -543,6 +550,8 @@ export function NewJobWorkflow({
                     className={buttonClassName({ size: "sm" })}
                     href={buildCustomerWorkspaceHref(selectedCustomerId, {
                       newAddress: true,
+                      returnLabel: "Back to estimate intake",
+                      returnTo: addressReturnHref,
                       tab: "addresses"
                     })}
                   >

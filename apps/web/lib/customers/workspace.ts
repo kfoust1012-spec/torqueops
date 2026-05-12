@@ -44,6 +44,8 @@ type CustomerRouteOptions = {
   newVehicle?: boolean | undefined;
   editVehicleId?: string | undefined;
   customerId?: string | undefined;
+  returnLabel?: string | undefined;
+  returnTo?: string | undefined;
 };
 
 type CustomerWorkspaceHrefOptions = CustomerRouteOptions & {
@@ -179,6 +181,14 @@ export function buildCustomersHref(options: CustomerWorkspaceHrefOptions = {}) {
 
   if (options.editVehicleId) {
     searchParams.set("editVehicleId", options.editVehicleId);
+  }
+
+  if (options.returnTo) {
+    searchParams.set("returnTo", options.returnTo);
+  }
+
+  if (options.returnLabel) {
+    searchParams.set("returnLabel", options.returnLabel);
   }
 
   if (options.dateFrom) {

@@ -160,6 +160,21 @@ function getNullableNumber(formData: FormData, key: string): number | null {
   return value ? Number(value) : null;
 }
 
+function isSafeInternalReturnTo(value: string | null) {
+  return Boolean(value && value.startsWith("/") && !value.startsWith("//"));
+}
+
+function appendServiceSiteToReturnTo(returnTo: string, serviceSiteId: string) {
+  const [pathAndQuery = "", hash = ""] = returnTo.split("#", 2);
+  const [path = "", query = ""] = pathAndQuery.split("?", 2);
+  const searchParams = new URLSearchParams(query);
+
+  searchParams.set("serviceSiteId", serviceSiteId);
+
+  const serialized = searchParams.toString();
+  return `${path}${serialized ? `?${serialized}` : ""}${hash ? `#${hash}` : ""}`;
+}
+
 function getLatestJobTimestamp(job: JobRow) {
   return (
     job.completed_at ??
@@ -345,6 +360,7 @@ export async function CustomersWorkspaceShell({
   const editCustomer = readBooleanSearchParam(resolvedSearchParams.editCustomer);
   const newAddress = readBooleanSearchParam(resolvedSearchParams.newAddress);
   const editAddressId = readSingleSearchParam(resolvedSearchParams.editAddressId) ?? null;
+  const returnTo = readSingleSearchParam(resolvedSearchParams.returnTo) ?? null;
   const newVehicle = readBooleanSearchParam(resolvedSearchParams.newVehicle);
   const editVehicleId = readSingleSearchParam(resolvedSearchParams.editVehicleId) ?? null;
   const requestedSelectedVehicleId =
@@ -1701,11 +1717,16 @@ export async function CustomersWorkspaceShell({
       isActive: formData.get("isActive") === "on"
     });
 
-    if (result.error) {
+    if (result.error || !result.data) {
       throw toServerError(result.error, "Service site could not be created.");
     }
 
     revalidatePath("/dashboard/customers");
+
+    if (isSafeInternalReturnTo(returnTo)) {
+      redirect(appendServiceSiteToReturnTo(returnTo!, result.data.id));
+    }
+
     redirect(
       buildCustomerWorkspaceHref(selectedCustomerId, {
         ...routeState,

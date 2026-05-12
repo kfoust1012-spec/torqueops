@@ -27,6 +27,9 @@ type NewJobPageProps = {
     customerId?: string | string[];
     followUpJobId?: string | string[];
     mode?: string | string[];
+    returnLabel?: string | string[];
+    returnTo?: string | string[];
+    serviceSiteId?: string | string[];
     vehicleId?: string | string[];
   }>;
 };
@@ -45,13 +48,30 @@ function getNullableString(formData: FormData, key: string): string | null {
   return value ? value : null;
 }
 
+function buildNewVisitReturnHref(searchParams: Awaited<NonNullable<NewJobPageProps["searchParams"]>>) {
+  const params = new URLSearchParams();
+
+  for (const key of ["customerId", "vehicleId", "mode", "returnTo", "returnLabel", "followUpJobId"] as const) {
+    const value = getSearchParam(searchParams[key]).trim();
+
+    if (value) {
+      params.set(key, value);
+    }
+  }
+
+  const serialized = params.toString();
+  return serialized ? `/dashboard/visits/new?${serialized}` : "/dashboard/visits/new";
+}
+
 export async function NewVisitPageImpl({ searchParams }: NewJobPageProps) {
   const context = await requireCompanyContext({ requireOfficeAccess: true });
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const requestedCustomerId = getSearchParam(resolvedSearchParams.customerId).trim();
   const requestedVehicleId = getSearchParam(resolvedSearchParams.vehicleId).trim();
+  const requestedServiceSiteId = getSearchParam(resolvedSearchParams.serviceSiteId).trim();
   const followUpJobId = getSearchParam(resolvedSearchParams.followUpJobId).trim();
   const entryMode = getSearchParam(resolvedSearchParams.mode).trim() === "estimate" ? "estimate" : "job";
+  const addressReturnHref = buildNewVisitReturnHref(resolvedSearchParams);
   const [customersResult, techniciansResult, vehiclesResult, addressesResult] = await Promise.all([
     listCustomersByCompany(context.supabase, context.companyId),
     listAssignableTechniciansByCompany(context.supabase, context.companyId),
@@ -108,6 +128,8 @@ export async function NewVisitPageImpl({ searchParams }: NewJobPageProps) {
     }));
   const requestedVehicle =
     activeVehicles.find((vehicle) => vehicle.id === requestedVehicleId) ?? null;
+  const requestedServiceSite =
+    activeServiceSites.find((site) => site.id === requestedServiceSiteId) ?? null;
   const followUpJobResult = followUpJobId
     ? await getJobById(context.supabase, followUpJobId)
     : { data: null, error: null };
@@ -124,7 +146,10 @@ export async function NewVisitPageImpl({ searchParams }: NewJobPageProps) {
       ? followUpJobResult.data
       : null;
   const resolvedCustomerId =
-    requestedVehicle?.customerId ?? followUpJob?.customerId ?? requestedCustomerId;
+    requestedVehicle?.customerId ??
+    requestedServiceSite?.customerId ??
+    followUpJob?.customerId ??
+    requestedCustomerId;
   const defaultCustomer =
     customers.find((customer) => customer.id === resolvedCustomerId) ?? customers[0] ?? null;
 
@@ -155,9 +180,11 @@ export async function NewVisitPageImpl({ searchParams }: NewJobPageProps) {
   const preferredStartStep =
     entryMode === "estimate"
       ? defaultVehicle && (requestedVehicleId || customerVehicleCount <= 1)
-        ? customerServiceSiteCount <= 1
+        ? requestedServiceSite?.customerId === defaultCustomer.id
           ? 3
-          : 2
+          : customerServiceSiteCount <= 1
+            ? 3
+            : 2
         : resolvedCustomerId
           ? 1
           : 0
@@ -385,6 +412,7 @@ export async function NewVisitPageImpl({ searchParams }: NewJobPageProps) {
 
       <NewJobWorkflow
         action={createJobAction}
+        addressReturnHref={addressReturnHref}
         cancelHref="/dashboard/visits"
         customers={customers}
         defaultCustomerId={defaultCustomer.id}
@@ -394,11 +422,14 @@ export async function NewVisitPageImpl({ searchParams }: NewJobPageProps) {
         initialCustomerConcern={initialCustomerConcern}
         initialInternalSummary={initialInternalSummary}
         initialTitle={initialTitle}
-      preferredStartStep={preferredStartStep}
-      serviceSites={activeServiceSites}
-      technicians={techniciansResult.data ?? []}
-      vehicles={activeVehicles}
-    />
+        preferredStartStep={preferredStartStep}
+        serviceSites={activeServiceSites}
+        defaultServiceSiteId={
+          requestedServiceSite?.customerId === defaultCustomer.id ? requestedServiceSite.id : ""
+        }
+        technicians={techniciansResult.data ?? []}
+        vehicles={activeVehicles}
+      />
     </Page>
   );
 }
