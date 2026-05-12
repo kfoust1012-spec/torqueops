@@ -56,4 +56,26 @@ describe("dispatch calendar query helpers", () => {
       )
     ).toBe("/dashboard/dispatch?date=2026-04-30&view=month&scope=all_workers&includeUnassigned=1");
   });
+
+  it("omits jobId when a selected dispatch visit is cleared", async () => {
+    const { buildDispatchCalendarHref } = await calendarQueryModule;
+
+    expect(
+      buildDispatchCalendarHref(
+        {
+          date: "2026-05-12",
+          focusMode: false,
+          includeUnassigned: true,
+          jobId: "bc273b45-ac63-4720-84d4-320b5705164f",
+          resourceUserIds: [],
+          savedViewId: "",
+          scope: "all_workers",
+          view: "day"
+        },
+        {
+          jobId: ""
+        }
+      )
+    ).toBe("/dashboard/dispatch?date=2026-05-12&view=day&scope=all_workers&includeUnassigned=1");
+  });
 });

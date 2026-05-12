@@ -1366,6 +1366,7 @@ export function DispatchCommandCenter({
   });
   const [selectedVisitId, setSelectedVisitId] = useState<string | null>(currentState.jobId || null);
   const [sharedPinnedVisitId, setSharedPinnedVisitId] = useState<string | null>(null);
+  const [dismissedVisitId, setDismissedVisitId] = useState<string | null>(null);
   const [placementHighlightVisitId, setPlacementHighlightVisitId] = useState<string | null>(null);
   const [selectedAvailabilityBlockId, setSelectedAvailabilityBlockId] = useState<string | null>(null);
   const [focusedConflictTechnicianUserId, setFocusedConflictTechnicianUserId] = useState<string | null>(null);
@@ -1631,11 +1632,28 @@ export function DispatchCommandCenter({
   }, []);
 
   useEffect(() => {
-    const nextVisitId =
-      currentState.jobId || (sharedPinnedVisitId && visibleVisitIds.has(sharedPinnedVisitId) ? sharedPinnedVisitId : "") || "";
+    const currentJobId =
+      currentState.jobId && currentState.jobId !== dismissedVisitId ? currentState.jobId : "";
+    const pinnedVisitId =
+      sharedPinnedVisitId &&
+      sharedPinnedVisitId !== dismissedVisitId &&
+      visibleVisitIds.has(sharedPinnedVisitId)
+        ? sharedPinnedVisitId
+        : "";
+    const nextVisitId = currentJobId || pinnedVisitId || "";
 
     setSelectedVisitId((current) => (current === (nextVisitId || null) ? current : nextVisitId || null));
-  }, [currentState.jobId, sharedPinnedVisitId, visibleVisitIds]);
+  }, [currentState.jobId, dismissedVisitId, sharedPinnedVisitId, visibleVisitIds]);
+
+  useEffect(() => {
+    if (!dismissedVisitId) {
+      return;
+    }
+
+    if (currentState.jobId !== dismissedVisitId && sharedPinnedVisitId !== dismissedVisitId) {
+      setDismissedVisitId(null);
+    }
+  }, [currentState.jobId, dismissedVisitId, sharedPinnedVisitId]);
 
   useEffect(() => {
     const nextJobId = selectedVisitId ?? "";
@@ -2845,11 +2863,14 @@ export function DispatchCommandCenter({
   }
 
   function syncSelectedVisit(jobId: string | null) {
-    setSelectedVisitId(jobId);
-
     if (!jobId) {
+      closeSelectedVisit();
       return;
     }
+
+    setDismissedVisitId(null);
+    setSelectedVisitId(jobId);
+    setSelectedAvailabilityBlockId(null);
 
     setSharedPinnedVisitId(jobId);
     emitHotThreadTargetEvent(
@@ -2862,6 +2883,32 @@ export function DispatchCommandCenter({
         source: "dispatch"
       }
     );
+  }
+
+  function closeSelectedVisit() {
+    const visitIdToDismiss = selectedVisitId ?? currentState.jobId ?? sharedPinnedVisitId;
+
+    if (visitIdToDismiss) {
+      setDismissedVisitId(visitIdToDismiss);
+    }
+
+    setSelectedVisitId(null);
+    setSharedPinnedVisitId(null);
+    setSelectedAvailabilityBlockId(null);
+    setError(null);
+    setBatchInterventionFeedback(null);
+    emitHotThreadTargetEvent(null, {
+      pin: true,
+      source: "dispatch"
+    });
+
+    if (currentState.jobId) {
+      startRouting(() => {
+        router.replace(buildDispatchCalendarHref(currentState, { jobId: "" }), {
+          scroll: false
+        });
+      });
+    }
   }
 
   function refreshCalendar() {
