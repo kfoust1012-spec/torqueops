@@ -11,4 +11,17 @@ describe("dashboard walkthrough steps", () => {
     expect(dashboardWalkthroughSteps[4]?.id).toBe("return-home");
     expect(dashboardWalkthroughSteps[5]?.id).toBe("dispatch-open");
   });
+
+  it("keeps step 5 anchored to Today brief instead of estimate intake", () => {
+    const stepFive = dashboardWalkthroughSteps[4];
+
+    expect(stepFive).toMatchObject({
+      ctaLabel: "Open Today brief",
+      href: "/dashboard",
+      id: "return-home",
+      label: "Dashboard",
+      title: "Read Today brief"
+    });
+    expect(`${stepFive?.body} ${stepFive?.href} ${stepFive?.title}`.toLowerCase()).not.toContain("estimate");
+  });
 });

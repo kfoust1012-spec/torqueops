@@ -1,5 +1,6 @@
 export type DashboardWalkthroughStep = {
   body: string;
+  ctaLabel?: string;
   href: string;
   id: string;
   label: string;
@@ -36,11 +37,12 @@ export const dashboardWalkthroughSteps: readonly DashboardWalkthroughStep[] = [
     title: "Use the sidebar"
   },
   {
-    body: "Return to Today brief any time you feel lost. It is the home base for the office workflow.",
+    body: "Focus on the Today brief page title, date badge, and owner summary. This step is about the dashboard home view, not a quick action shortcut.",
+    ctaLabel: "Open Today brief",
     href: "/dashboard",
     id: "return-home",
-    label: "Navigation",
-    title: "Use Today brief as home"
+    label: "Dashboard",
+    title: "Read Today brief"
   },
   {
     body: "Open Dispatch when you need to schedule, assign, or rebalance technician work.",

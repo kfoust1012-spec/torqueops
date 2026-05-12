@@ -75,7 +75,7 @@ export function DashboardWalkthrough({ steps }: DashboardWalkthroughProps) {
             Back
           </button>
           <Link className={buttonClassName({ tone: "secondary" })} href={activeStep.href}>
-            Open section
+            {activeStep.ctaLabel ?? "Open section"}
           </Link>
           <button
             className={buttonClassName({ tone: canGoForward ? "primary" : "secondary" })}
