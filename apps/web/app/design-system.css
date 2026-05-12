@@ -19019,6 +19019,16 @@ body,
 .ui-admin-nav__section-items {
   display: grid;
   gap: 6px;
+  min-width: 0;
+}
+
+.ui-admin-nav__section--utility .ui-admin-nav__section-items {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.ui-admin-nav__item--utility {
+  min-width: 0;
+  text-decoration: none;
 }
 
 .ops-hub {
