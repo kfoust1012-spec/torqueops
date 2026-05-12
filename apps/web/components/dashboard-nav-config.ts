@@ -102,6 +102,14 @@ export const dashboardPrimaryNavSections = [
 
 export const dashboardUtilityNavItems: readonly DashboardNavItem[] = [
   {
+    commandKeywords: ["guide", "intro", "onboarding", "tour", "walkthrough"],
+    compactLabel: "WLK",
+    href: "/dashboard/walkthrough",
+    hint: "Guided product walkthrough from dashboard basics through closeout",
+    icon: "today",
+    label: "Walkthrough"
+  },
+  {
     commandKeywords: ["analytics", "kpis", "reporting", "reports"],
     compactLabel: "RPT",
     href: "/dashboard/reports",
