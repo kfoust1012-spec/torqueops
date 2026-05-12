@@ -32,6 +32,7 @@ import {
   getVisitWorkflowLabel,
   getVisitWorkflowState,
   getVisitWorkflowTone,
+  visitWorkflowStates,
   type VisitWorkflowState
 } from "../../../../lib/jobs/workflow";
 import {
@@ -1278,6 +1279,7 @@ export function VisitsWorkboard({
     const isBulkSelected = selectedVisitIds.includes(visit.id);
     const canMessage = Boolean(visit.customerPhone);
     const canDrag = canEditRecords && !isPending && workflowState !== "completed";
+    const canMoveManually = canEditRecords && !isPending && workflowState !== "completed";
     const showUtilityActions =
       isSelected ||
       (!focusMode &&
@@ -1498,6 +1500,41 @@ export function VisitsWorkboard({
               </Link>
             ) : null}
           </div>
+          {canMoveManually ? (
+            <form
+              className="job-flow-card__manual-move"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const formData = new FormData(event.currentTarget);
+                const targetState = formData.get("targetState");
+
+                if (typeof targetState !== "string") {
+                  return;
+                }
+
+                void moveVisit(visit.id, targetState as VisitWorkflowState);
+              }}
+            >
+              <label>
+                <span>Move to</span>
+                <Select
+                  aria-label={`Move ${visit.title} to workflow stage`}
+                  defaultValue={workflowState}
+                  disabled={isPending || isRefreshing}
+                  name="targetState"
+                >
+                  {visitWorkflowStates.map((state) => (
+                    <option key={state} value={state}>
+                      {getVisitWorkflowLabel(state)}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+              <Button disabled={isPending || isRefreshing} size="sm" tone="ghost" type="submit">
+                Move
+              </Button>
+            </form>
+          ) : null}
         </div>
 
         {activeNoteVisitId === visit.id ? (
