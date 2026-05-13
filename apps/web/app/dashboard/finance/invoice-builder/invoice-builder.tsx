@@ -329,13 +329,6 @@ export function InvoiceBuilder() {
       return;
     }
 
-    const printWindow = window.open("", "_blank", "width=960,height=1200");
-
-    if (!printWindow) {
-      window.print();
-      return;
-    }
-
     const styleText = Array.from(document.styleSheets)
       .map((styleSheet) => {
         try {
@@ -348,8 +341,27 @@ export function InvoiceBuilder() {
       })
       .join("\n");
 
-    printWindow.document.open();
-    printWindow.document.write(`<!doctype html>
+    const printFrame = document.createElement("iframe");
+    printFrame.setAttribute("aria-hidden", "true");
+    printFrame.style.position = "fixed";
+    printFrame.style.right = "0";
+    printFrame.style.bottom = "0";
+    printFrame.style.width = "0";
+    printFrame.style.height = "0";
+    printFrame.style.border = "0";
+    document.body.appendChild(printFrame);
+
+    const printDocument = printFrame.contentDocument;
+    const printWindow = printFrame.contentWindow;
+
+    if (!printDocument || !printWindow) {
+      printFrame.remove();
+      window.print();
+      return;
+    }
+
+    printDocument.open();
+    printDocument.write(`<!doctype html>
 <html>
   <head>
     <title>${draft.invoiceNumber} invoice</title>
@@ -359,27 +371,55 @@ export function InvoiceBuilder() {
       html, body {
         width: 8.5in;
         min-height: 11in;
-        margin: 0;
-        background: white;
+        margin: 0 !important;
+        overflow: visible !important;
+        background: white !important;
       }
       body {
         display: block;
       }
+      body * {
+        visibility: visible !important;
+      }
       main {
+        position: static !important;
+        width: 8.5in !important;
+        min-height: 11in !important;
         margin: 0 !important;
         border-radius: 0 !important;
         box-shadow: none !important;
+      }
+      @media print {
+        html, body {
+          width: 8.5in;
+          min-height: 11in;
+          margin: 0 !important;
+          overflow: visible !important;
+          background: white !important;
+        }
+        body * {
+          visibility: visible !important;
+        }
+        main {
+          position: static !important;
+          width: 8.5in !important;
+          min-height: 11in !important;
+          margin: 0 !important;
+          border-radius: 0 !important;
+          box-shadow: none !important;
+        }
       }
     </style>
   </head>
   <body>${invoiceElement.outerHTML}</body>
 </html>`);
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.onafterprint = () => printWindow.close();
+    printDocument.close();
+    printWindow.onafterprint = () => printFrame.remove();
     window.setTimeout(() => {
+      printWindow.focus();
       printWindow.print();
-    }, 250);
+    }, 500);
+    window.setTimeout(() => printFrame.remove(), 60000);
   }
 
   return (
