@@ -11,7 +11,8 @@
   display: grid;
   gap: 18px;
   max-height: calc(100vh - 36px);
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   border: 1px solid var(--ui-border, rgba(148, 163, 184, .22));
   border-radius: 18px;
   background: var(--ui-surface, #111827);
@@ -22,9 +23,10 @@
 .controlsHeader,
 .lineEditorHeader {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 16px;
   align-items: flex-start;
+  flex-wrap: wrap;
   min-width: 0;
 }
 
@@ -52,13 +54,13 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  justify-content: flex-end;
-  max-width: 260px;
+  justify-content: flex-start;
+  max-width: none;
 }
 
 .formGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 12px;
 }
 
@@ -304,6 +306,10 @@
   letter-spacing: .8px;
   color: var(--invoice-silver);
   text-transform: uppercase;
+}
+
+.brandTagline strong {
+  color: var(--invoice-accent);
 }
 
 .invoiceTitle {
@@ -781,10 +787,6 @@
 
   .formGrid {
     grid-template-columns: 1fr;
-  }
-
-  .controlActions {
-    max-width: 230px;
   }
 }
 
