@@ -804,41 +804,57 @@
   }
 }
 
+@page {
+  size: 8.5in 11in;
+  margin: 0;
+}
+
 @media print {
-  :global(body *) {
-    visibility: hidden;
+  :global(html),
+  :global(body) {
+    width: 8.5in;
+    min-height: 11in;
+    margin: 0 !important;
+    overflow: hidden;
+    background: white !important;
   }
 
-  :global(body) {
-    margin: 0;
-    background: white;
+  :global(body *) {
+    visibility: hidden !important;
   }
 
   .builderShell {
-    display: block;
+    display: block !important;
   }
 
   .controls {
-    display: none;
+    display: none !important;
   }
 
   .previewWrap {
-    overflow: visible;
-    padding: 0;
-    background: white;
+    position: fixed !important;
+    inset: 0 !important;
+    width: 8.5in !important;
+    min-height: 11in !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    background: white !important;
   }
 
   .invoicePage {
-    width: 8.5in;
-    min-height: 11in;
-    position: absolute;
-    inset: 0 auto auto 0;
-    border-radius: 0;
-    box-shadow: none;
+    position: static !important;
+    width: 8.5in !important;
+    min-height: 11in !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    page-break-after: avoid;
   }
 
   .invoicePage,
   .invoicePage * {
-    visibility: visible;
+    visibility: visible !important;
   }
 }
