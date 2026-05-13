@@ -143,20 +143,23 @@
 
 .lineItemEditor {
   display: grid;
-  grid-template-columns: 54px minmax(140px, 1fr) 62px 86px 96px 36px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
   align-items: end;
   border-top: 1px solid var(--ui-border, rgba(148, 163, 184, .2));
   padding-top: 12px;
+  min-width: 0;
 }
 
-.lineTitleField {
-  grid-column: span 2;
+.lineTitleField,
+.lineNoteField {
+  grid-column: 1 / -1;
 }
 
 .removeLineButton {
   justify-content: center;
-  min-width: 36px;
+  min-width: 0;
+  width: 100%;
 }
 
 .previewWrap {
@@ -797,7 +800,7 @@
   }
 
   .lineTitleField {
-    grid-column: auto;
+    grid-column: 1 / -1;
   }
 }
 
