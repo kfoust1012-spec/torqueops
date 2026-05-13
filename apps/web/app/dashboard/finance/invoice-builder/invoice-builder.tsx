@@ -53,6 +53,8 @@ type SavedInvoiceDraft = {
 };
 
 const savedDraftsStorageKey = "torqueops.invoiceBuilder.savedDrafts.v1";
+const invoicePreviewWidth = 850;
+const invoicePreviewPadding = 48;
 
 const initialDraft: InvoiceDraft = {
   billToBusiness: "Underdog Automotive",
@@ -172,12 +174,34 @@ export function InvoiceBuilder() {
   const [savedDrafts, setSavedDrafts] = useState<SavedInvoiceDraft[]>([]);
   const [saveStatus, setSaveStatus] = useState("");
   const invoiceRef = useRef<HTMLElement>(null);
+  const previewWrapRef = useRef<HTMLElement>(null);
+  const [previewScale, setPreviewScale] = useState(1);
 
   const subtotal = useMemo(() => items.reduce((total, item) => total + calculateLineAmount(item), 0), [items]);
 
   useEffect(() => {
     const drafts = readSavedDrafts();
     setSavedDrafts(drafts);
+  }, []);
+
+  useEffect(() => {
+    const previewWrap = previewWrapRef.current;
+
+    if (!previewWrap || typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const updatePreviewScale = () => {
+      const availableWidth = previewWrap.clientWidth - invoicePreviewPadding;
+      const nextScale = Math.min(1, Math.max(0.62, availableWidth / invoicePreviewWidth));
+      setPreviewScale(Number(nextScale.toFixed(3)));
+    };
+
+    updatePreviewScale();
+    const resizeObserver = new ResizeObserver(updatePreviewScale);
+    resizeObserver.observe(previewWrap);
+
+    return () => resizeObserver.disconnect();
   }, []);
 
   function updateDraft<Key extends keyof InvoiceDraft>(key: Key, value: InvoiceDraft[Key]) {
@@ -367,51 +391,78 @@ export function InvoiceBuilder() {
     <title>${draft.invoiceNumber} invoice</title>
     <style>${styleText}</style>
     <style>
-      @page { size: 8.5in 11in; margin: 0; }
+      @page { size: letter portrait; margin: 0; }
       html, body {
         width: 8.5in;
-        min-height: 11in;
+        height: 11in;
         margin: 0 !important;
-        overflow: visible !important;
+        overflow: hidden !important;
         background: white !important;
+        print-color-adjust: exact !important;
+        -webkit-print-color-adjust: exact !important;
       }
       body {
         display: block;
       }
       body * {
         visibility: visible !important;
+        print-color-adjust: exact !important;
+        -webkit-print-color-adjust: exact !important;
+      }
+      .print-sheet {
+        width: 8.5in;
+        height: 11in;
+        overflow: hidden;
+        background: white;
       }
       main {
         position: static !important;
-        width: 8.5in !important;
-        min-height: 11in !important;
+        width: 850px !important;
+        min-height: 1100px !important;
         margin: 0 !important;
         border-radius: 0 !important;
         box-shadow: none !important;
+        transform: scale(0.96);
+        transform-origin: top left;
+        zoom: 1 !important;
       }
       @media print {
         html, body {
           width: 8.5in;
-          min-height: 11in;
+          height: 11in;
           margin: 0 !important;
-          overflow: visible !important;
+          overflow: hidden !important;
           background: white !important;
+          print-color-adjust: exact !important;
+          -webkit-print-color-adjust: exact !important;
         }
         body * {
           visibility: visible !important;
+          print-color-adjust: exact !important;
+          -webkit-print-color-adjust: exact !important;
+        }
+        .print-sheet {
+          width: 8.5in;
+          height: 11in;
+          overflow: hidden;
         }
         main {
           position: static !important;
-          width: 8.5in !important;
-          min-height: 11in !important;
+          width: 850px !important;
+          min-height: 1100px !important;
           margin: 0 !important;
           border-radius: 0 !important;
           box-shadow: none !important;
+          transform: scale(0.96);
+          transform-origin: top left;
+          zoom: 1 !important;
+          break-after: avoid;
+          page-break-after: avoid;
         }
       }
     </style>
   </head>
-  <body>${invoiceElement.outerHTML}</body>
+  <body><div class="print-sheet">${invoiceElement.outerHTML}</div></body>
 </html>`);
     printDocument.close();
     printWindow.onafterprint = () => printFrame.remove();
@@ -704,7 +755,12 @@ export function InvoiceBuilder() {
         </section>
       </form>
 
-      <section className={styles.previewWrap} aria-label="Invoice preview">
+      <section
+        ref={previewWrapRef}
+        className={styles.previewWrap}
+        style={{ "--invoice-preview-scale": previewScale } as CSSProperties}
+        aria-label="Invoice preview"
+      >
         <main
           ref={invoiceRef}
           className={styles.invoicePage}

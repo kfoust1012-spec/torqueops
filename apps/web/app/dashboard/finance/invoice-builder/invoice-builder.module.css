@@ -167,6 +167,8 @@
   border-radius: 18px;
   background: #101114;
   padding: 24px;
+  display: grid;
+  justify-items: center;
 }
 
 .invoicePage {
@@ -184,6 +186,9 @@
   color: #070b10;
   font-family: Arial, Helvetica, sans-serif;
   position: relative;
+  zoom: var(--invoice-preview-scale, 1);
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
 }
 
 .topBand {
@@ -805,7 +810,7 @@
 }
 
 @page {
-  size: 8.5in 11in;
+  size: letter portrait;
   margin: 0;
 }
 
@@ -813,10 +818,12 @@
   :global(html),
   :global(body) {
     width: 8.5in;
-    min-height: 11in;
+    height: 11in;
     margin: 0 !important;
     overflow: hidden;
     background: white !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
   }
 
   :global(body *) {
@@ -835,7 +842,7 @@
     position: fixed !important;
     inset: 0 !important;
     width: 8.5in !important;
-    min-height: 11in !important;
+    height: 11in !important;
     overflow: visible !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -845,16 +852,21 @@
 
   .invoicePage {
     position: static !important;
-    width: 8.5in !important;
-    min-height: 11in !important;
+    width: 850px !important;
+    min-height: 1100px !important;
     margin: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
+    transform: scale(.96);
+    transform-origin: top left;
+    zoom: 1 !important;
     page-break-after: avoid;
   }
 
   .invoicePage,
   .invoicePage * {
     visibility: visible !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
   }
 }
