@@ -1,6 +1,6 @@
 "use client";
 
-import { type ChangeEvent, type CSSProperties, useMemo, useRef, useState } from "react";
+import { type ChangeEvent, type CSSProperties, useEffect, useMemo, useRef, useState } from "react";
 
 import { buttonClassName, cx } from "../../../../components/ui";
 import styles from "./invoice-builder.module.css";
@@ -43,6 +43,16 @@ type InvoiceDraft = {
   thankYou: string;
   terms: string;
 };
+
+type SavedInvoiceDraft = {
+  draft: InvoiceDraft;
+  id: string;
+  items: InvoiceLineItem[];
+  name: string;
+  savedAt: string;
+};
+
+const savedDraftsStorageKey = "torqueops.invoiceBuilder.savedDrafts.v1";
 
 const initialDraft: InvoiceDraft = {
   billToBusiness: "Underdog Automotive",
@@ -133,12 +143,42 @@ function getBrandLabel(draft: InvoiceDraft) {
   return `${draft.brandName}${draft.brandAccent}`.trim() || "TorqueOps";
 }
 
+function getDefaultDraftName(draft: InvoiceDraft) {
+  return [draft.invoiceNumber, draft.billToBusiness].filter(Boolean).join(" - ") || "Invoice draft";
+}
+
+function readSavedDrafts() {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const storedValue = window.localStorage.getItem(savedDraftsStorageKey);
+    return storedValue ? (JSON.parse(storedValue) as SavedInvoiceDraft[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSavedDrafts(savedDrafts: SavedInvoiceDraft[]) {
+  window.localStorage.setItem(savedDraftsStorageKey, JSON.stringify(savedDrafts));
+}
+
 export function InvoiceBuilder() {
   const [draft, setDraft] = useState<InvoiceDraft>(initialDraft);
+  const [draftName, setDraftName] = useState(getDefaultDraftName(initialDraft));
   const [items, setItems] = useState<InvoiceLineItem[]>(initialItems);
+  const [savedDraftId, setSavedDraftId] = useState("");
+  const [savedDrafts, setSavedDrafts] = useState<SavedInvoiceDraft[]>([]);
+  const [saveStatus, setSaveStatus] = useState("");
   const invoiceRef = useRef<HTMLElement>(null);
 
   const subtotal = useMemo(() => items.reduce((total, item) => total + calculateLineAmount(item), 0), [items]);
+
+  useEffect(() => {
+    const drafts = readSavedDrafts();
+    setSavedDrafts(drafts);
+  }, []);
 
   function updateDraft<Key extends keyof InvoiceDraft>(key: Key, value: InvoiceDraft[Key]) {
     setDraft((current) => ({ ...current, [key]: value }));
@@ -169,6 +209,57 @@ export function InvoiceBuilder() {
   function resetDraft() {
     setDraft(initialDraft);
     setItems(initialItems);
+    setDraftName(getDefaultDraftName(initialDraft));
+    setSavedDraftId("");
+    setSaveStatus("");
+  }
+
+  function saveCurrentDraft() {
+    const id = savedDraftId || crypto.randomUUID();
+    const savedAt = new Date().toISOString();
+    const nextDraft: SavedInvoiceDraft = {
+      draft,
+      id,
+      items,
+      name: draftName.trim() || getDefaultDraftName(draft),
+      savedAt
+    };
+    const nextDrafts = [nextDraft, ...savedDrafts.filter((savedDraft) => savedDraft.id !== id)];
+
+    writeSavedDrafts(nextDrafts);
+    setSavedDraftId(id);
+    setSavedDrafts(nextDrafts);
+    setDraftName(nextDraft.name);
+    setSaveStatus(`Saved ${nextDraft.name}`);
+  }
+
+  function loadSavedDraft(id: string) {
+    const savedDraft = savedDrafts.find((candidate) => candidate.id === id);
+
+    if (!savedDraft) {
+      setSavedDraftId("");
+      return;
+    }
+
+    setDraft(savedDraft.draft);
+    setItems(savedDraft.items);
+    setDraftName(savedDraft.name);
+    setSavedDraftId(savedDraft.id);
+    setSaveStatus(`Loaded ${savedDraft.name}`);
+  }
+
+  function deleteSavedDraft() {
+    if (!savedDraftId) {
+      return;
+    }
+
+    const deletedDraft = savedDrafts.find((candidate) => candidate.id === savedDraftId);
+    const nextDrafts = savedDrafts.filter((candidate) => candidate.id !== savedDraftId);
+
+    writeSavedDrafts(nextDrafts);
+    setSavedDrafts(nextDrafts);
+    setSavedDraftId("");
+    setSaveStatus(deletedDraft ? `Deleted ${deletedDraft.name}` : "Draft deleted");
   }
 
   function handleLogoChange(event: ChangeEvent<HTMLInputElement>) {
@@ -314,6 +405,49 @@ export function InvoiceBuilder() {
             </button>
           </div>
         </div>
+
+        <section className={styles.formGrid} aria-label="Saved invoice drafts">
+          <div className={styles.brandControls}>
+            <div>
+              <p className={styles.eyebrow}>Saved drafts</p>
+              <h3>{savedDrafts.length ? `${savedDrafts.length} saved` : "No saved drafts"}</h3>
+            </div>
+            {saveStatus ? <span>{saveStatus}</span> : null}
+          </div>
+
+          <label>
+            Draft name
+            <input value={draftName} onChange={(event) => setDraftName(event.target.value)} />
+          </label>
+
+          <label>
+            Load draft
+            <select value={savedDraftId} onChange={(event) => loadSavedDraft(event.target.value)}>
+              <option value="">Select a saved draft</option>
+              {savedDrafts.map((savedDraft) => (
+                <option key={savedDraft.id} value={savedDraft.id}>
+                  {savedDraft.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className={styles.brandControls}>
+            <button className={buttonClassName({ size: "sm", tone: "secondary" })} onClick={saveCurrentDraft} type="button">
+              <span aria-hidden>▣</span>
+              Save draft
+            </button>
+            <button
+              className={buttonClassName({ size: "sm", tone: "tertiary" })}
+              disabled={!savedDraftId}
+              onClick={deleteSavedDraft}
+              type="button"
+            >
+              <span aria-hidden>×</span>
+              Delete
+            </button>
+          </div>
+        </section>
 
         <div className={styles.formGrid}>
           <label>
