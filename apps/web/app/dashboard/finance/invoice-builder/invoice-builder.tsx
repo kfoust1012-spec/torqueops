@@ -1,6 +1,6 @@
 "use client";
 
-import { type ChangeEvent, type CSSProperties, useMemo, useState } from "react";
+import { type ChangeEvent, type CSSProperties, useMemo, useRef, useState } from "react";
 
 import { buttonClassName, cx } from "../../../../components/ui";
 import styles from "./invoice-builder.module.css";
@@ -136,6 +136,7 @@ function getBrandLabel(draft: InvoiceDraft) {
 export function InvoiceBuilder() {
   const [draft, setDraft] = useState<InvoiceDraft>(initialDraft);
   const [items, setItems] = useState<InvoiceLineItem[]>(initialItems);
+  const invoiceRef = useRef<HTMLElement>(null);
 
   const subtotal = useMemo(() => items.reduce((total, item) => total + calculateLineAmount(item), 0), [items]);
 
@@ -229,6 +230,67 @@ export function InvoiceBuilder() {
     window.location.href = `mailto:${encodeURIComponent(draft.billToEmail)}?${params.toString()}`;
   }
 
+  function printInvoice() {
+    const invoiceElement = invoiceRef.current;
+
+    if (!invoiceElement) {
+      window.print();
+      return;
+    }
+
+    const printWindow = window.open("", "_blank", "width=960,height=1200");
+
+    if (!printWindow) {
+      window.print();
+      return;
+    }
+
+    const styleText = Array.from(document.styleSheets)
+      .map((styleSheet) => {
+        try {
+          return Array.from(styleSheet.cssRules)
+            .map((rule) => rule.cssText)
+            .join("\n");
+        } catch {
+          return "";
+        }
+      })
+      .join("\n");
+
+    printWindow.document.open();
+    printWindow.document.write(`<!doctype html>
+<html>
+  <head>
+    <title>${draft.invoiceNumber} invoice</title>
+    <style>${styleText}</style>
+    <style>
+      @page { size: 8.5in 11in; margin: 0; }
+      html, body {
+        width: 8.5in;
+        min-height: 11in;
+        margin: 0;
+        background: white;
+      }
+      body {
+        display: block;
+      }
+      main {
+        margin: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+      }
+    </style>
+  </head>
+  <body>${invoiceElement.outerHTML}</body>
+</html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.onafterprint = () => printWindow.close();
+    window.setTimeout(() => {
+      printWindow.print();
+    }, 250);
+  }
+
   return (
     <div className={styles.builderShell}>
       <form className={styles.controls} onSubmit={(event) => event.preventDefault()}>
@@ -246,7 +308,7 @@ export function InvoiceBuilder() {
               <span aria-hidden>✉</span>
               Email draft
             </button>
-            <button className={buttonClassName({ size: "sm", tone: "primary" })} onClick={() => window.print()} type="button">
+            <button className={buttonClassName({ size: "sm", tone: "primary" })} onClick={printInvoice} type="button">
               <span aria-hidden>⎙</span>
               Print / PDF
             </button>
@@ -470,6 +532,7 @@ export function InvoiceBuilder() {
 
       <section className={styles.previewWrap} aria-label="Invoice preview">
         <main
+          ref={invoiceRef}
           className={styles.invoicePage}
           style={
             {
